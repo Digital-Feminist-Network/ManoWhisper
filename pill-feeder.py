@@ -5,7 +5,7 @@ import sys
 import feedparser
 
 if len(sys.argv) != 2:
-    print("Usage: python rss_to_text.py <rss_feed_url>")
+    print("Usage: python pill-feeder.py <rss_feed_url>")
     sys.exit(1)
 
 rss_feed_url = sys.argv[1]
@@ -17,7 +17,7 @@ def clean_filename(title):
     return re.sub(r'[\\/*?:"<>|]', "", title) + ".txt"
 
 
-output_dir = "rss_episodes"
+output_dir = "data"
 os.makedirs(output_dir, exist_ok=True)
 
 for entry in feed.entries:
