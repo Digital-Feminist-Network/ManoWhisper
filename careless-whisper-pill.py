@@ -1,5 +1,6 @@
 import glob
 import os
+import shlex
 import subprocess
 import sys
 
@@ -10,29 +11,33 @@ if len(sys.argv) != 2:
 directory_path = sys.argv[1]
 
 model = "turbo"
-threads = 24
+threads = 44
 fp16 = "False"
 language = "en"
 output_format = "vtt"
 
-mp3_files = glob.glob(os.path.join(directory_path, "*.mp3"))
+media_files = glob.glob(os.path.join(directory_path, "*.m*"))
 
-def process_file(mp3_file):
-    output_dir = os.path.dirname(mp3_file)
 
+def process_file(media_file):
+    quoted_file = shlex.quote(media_file)
     cmd_str = (
         f"whisper --threads {threads} --model {model} "
-        f"--fp16 {fp16} --language {language} \"{mp3_file}\" "
-        f"--output_format {output_format} --output_dir \"{output_dir}\""
+        f"--fp16 {fp16} --language {language} {quoted_file} "
+        f"--output_format {output_format}"
     )
 
     try:
         subprocess.run(cmd_str, shell=True, check=True)
-        print(f"Successfully processed {mp3_file}")
+        print(f"Successfully processed {media_file}")
     except subprocess.CalledProcessError as e:
-        print(f"Error processing {mp3_file}: {e}")
+        print(f"Error processing {media_file}: {e}")
 
-for mp3_file in mp3_files:
-    process_file(mp3_file)
+
+for media_file in media_files:
+    if os.path.isfile(media_file):
+        process_file(media_file)
+    else:
+        print(f"File does not exist: {media_file}")
 
 print("Processing completed.")
