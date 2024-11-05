@@ -10,14 +10,14 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 logging.basicConfig(
-    filename="watch-jordan.log", level=logging.INFO, format="%(asctime)s - %(message)s"
+    filename="watch-roger.log", level=logging.INFO, format="%(asctime)s - %(message)s"
 )
 
 # Constants.
-output_dir = "/mnt/vol1/data_sets/digfem/podcast-analysis/media/The Jordan B. Peterson Podcast/vtt"
-watch_dir = "/mnt/vol1/data_sets/digfem/podcast-analysis/media/The Jordan B. Peterson Podcast/mp3"
+output_dir = "/mnt/vol1/data_sets/digfem/podcast-analysis/media/The The StoneZONE with Roger Stone/vtt"
+watch_dir = "/mnt/vol1/data_sets/digfem/podcast-analysis/media/The StoneZONE with Roger Stone/mp3"
 
-queue_file = "jordan-queue.txt"
+queue_file = "roger-queue.txt"
 
 QUEUE = deque()
 PROCESSED_FILES = set()
