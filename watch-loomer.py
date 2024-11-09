@@ -42,9 +42,14 @@ def save_queue():
 
 def check_whisper_running():
     """Check if the whisper process is currently running."""
-    for proc in psutil.process_iter(["name"]):
-        if proc.info["name"] == "whisper":
-            return True
+    for proc in psutil.process_iter(["name", "cmdline"]):
+        try:
+            cmdline = proc.info["cmdline"]
+            if "/bin/sh" in cmdline and "whisper" in cmdline:
+                logging.info(f"Whisper process detected: {' '.join(cmdline)}")
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied, KeyError):
+            continue
     return False
 
 
@@ -52,7 +57,16 @@ class FileEventHandler(FileSystemEventHandler):
     def on_created(self, event):
         if event.is_directory:
             return
-        filename = os.path.basename(event.src_path)
+        self.handle_event(event.src_path)
+
+    def on_moved(self, event):
+        if event.is_directory:
+            return
+        if event.dest_path.endswith(".m4a"):
+            self.handle_event(event.dest_path)
+
+    def handle_event(self, file_path):
+        filename = os.path.basename(file_path)
         if filename.endswith(".m4a"):
             with LOCK:
                 if filename not in PROCESSED_FILES and filename not in QUEUE:
