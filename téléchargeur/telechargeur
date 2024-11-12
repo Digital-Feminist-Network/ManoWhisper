@@ -1,0 +1,93 @@
+#!/bin/bash
+
+# Check if config file is provided as an argument.
+if [ $# -lt 1 ]; then
+	echo "Usage: $0 <path/to/config.txt>"
+	exit 1
+fi
+
+# Load the config file.
+ENV_FILE="$1"
+
+if [ ! -f "$ENV_FILE" ]; then
+	echo "Error: Configuration file not found at $ENV_FILE"
+	exit 1
+fi
+
+# Source the config file.
+source "$ENV_FILE"
+
+# Verify required variables are set.
+REQUIRED_VARS=("PROJECT_DIR" "PODCAST" "MEDIA_DIR" "DL_LIST" "DESCRIPTION_DIR" "TRANSCRIPT_DIR" "FEED_URL" "EMAIL" "SUBJECT" "LOG" "REMOTE_HOST" "REMOTE_DESC_DIR" "REMOTE_VTT_DIR")
+
+for var in "${REQUIRED_VARS[@]}"; do
+	if [ -z "${!var}" ]; then
+		echo "Error: $var is not set in $ENV_FILE"
+		exit 1
+	fi
+done
+
+# Navigate to the directory.
+cd "$MEDIA_DIR" || {
+	echo "Failed to access directory: $MEDIA_DIR"
+	exit 1
+}
+
+# Count files before download.
+BEFORE=$(find "$MEDIA_DIR" -type f | wc -l)
+
+# Run yt-dlp to download MP3 files and capture errors.
+/home/nruest/.pyenv/shims/yt-dlp -x --audio-format mp3 --output "$MEDIA_DIR/%(title)s.mp3" --download-archive "$DL_LIST" "$FEED_URL" >>"$LOG" 2>&1
+
+# Run yt-dlp command to download descriptions.
+/home/nruest/.pyenv/shims/yt-dlp --skip-download --write-description --output "$DESCRIPTION_DIR/%(title)s" --download-archive "$DL_LIST" "$FEED_URL" >>"$LOG" 2>&1
+
+# Count files after download.
+AFTER=$(find "$MEDIA_DIR" -type f | wc -l)
+
+# Determine if new files were downloaded.
+NEW_FILES=$((AFTER - BEFORE))
+
+# Build the email body.
+email_body=$(
+	cat <<EOF
+Podcast download completed.
+
+Files before: $BEFORE
+Files after: $AFTER
+New files downloaded: $NEW_FILES
+EOF
+)
+
+# Send the email.
+{
+	echo "Subject: $SUBJECT"
+	echo "To: $EMAIL"
+	echo ""
+	echo -e "$email_body"
+} | /usr/sbin/sendmail -t
+
+# Rename descriptions from .description to .html.
+cd "$DESCRIPTION_DIR" || {
+	echo "Failed to access directory: $DESCRIPTION_DIR"
+	exit 1
+}
+rename -v 's/.description/.html/g' ./**.description
+rm -f ./*.description
+
+# Sync .vtt files to the remote server.
+cd "$TRANSCRIPT_DIR" || {
+	echo "Failed to access directory: $TRANSCRIPT_DIR"
+	exit 1
+}
+rsync -avz --stats --progress ./*.vtt "$REMOTE_HOST:$REMOTE_VTT_DIR"
+
+# Sync description files to the remote server.
+rsync -avz --stats --progress "$DESCRIPTION_DIR"/*.html "$REMOTE_HOST:$REMOTE_DESC_DIR"
+
+# Sync the entire directory to Google Drive.
+cd "$(dirname "$PROJECT_DIR")" || {
+	echo "Failed to access parent directory of: $PROJECT_DIR"
+	exit 1
+}
+rclone sync -v "$PROJECT_DIR/$PODCAST" --drive-shared-with-me "gdrive:DigFemNet 2024-2027/Podcast analysis/$PODCAST"
