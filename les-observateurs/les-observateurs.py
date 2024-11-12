@@ -6,24 +6,44 @@ import time
 from collections import deque
 
 import psutil
+import toml
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-logging.basicConfig(
-    filename="watch-roger.log", level=logging.INFO, format="%(asctime)s - %(message)s"
-)
-
 # Constants.
-output_dir = "/mnt/vol1/data_sets/digfem/podcast-analysis/media/The The StoneZONE with Roger Stone/vtt"
-watch_dir = "/mnt/vol1/data_sets/digfem/podcast-analysis/media/The StoneZONE with Roger Stone/mp3"
-
-queue_file = "roger-queue.txt"
-
 QUEUE = deque()
 PROCESSED_FILES = set()
 LOCK = threading.Lock()
 PROCESSING = False
 PROCESS_DELAY = 0.5
+
+# TOML config variables.
+output_dir = ""
+watch_dir = ""
+queue_file = ""
+logfile = ""
+
+
+# Load TOML config.
+def load_config(toml_path):
+    global output_dir, watch_dir, queue_file, logfile
+
+    try:
+        config = toml.load(toml_path)
+        output_dir = config["paths"]["output_dir"]
+        watch_dir = config["paths"]["watch_dir"]
+        queue_file = config["paths"]["queue_file"]
+        logfile = config["logging"]["logfile"]
+
+        # Initialize logging.
+        logging.basicConfig(
+            filename=logfile, level=logging.INFO, format="%(asctime)s - %(message)s"
+        )
+        logging.info("Configuration loaded successfully.")
+
+    except Exception as e:
+        print(f"Error loading configuration file: {e}")
+        exit(1)
 
 
 # Load existing queue from file.
@@ -67,10 +87,10 @@ class FileEventHandler(FileSystemEventHandler):
 
     def handle_event(self, file_path):
         filename = os.path.basename(file_path)
-        if filename.endswith(".mp3"):
+        if filename.lower().endswith((".mp3", ".m4a")):
             with LOCK:
                 if filename not in PROCESSED_FILES and filename not in QUEUE:
-                    logging.info(f"Detected new file event - {filename}")
+                    logging.info(f"Detected new file event: {filename}")
                     QUEUE.append(filename)
                     if not PROCESSING:
                         threading.Thread(target=self.process_queue).start()
@@ -80,6 +100,7 @@ class FileEventHandler(FileSystemEventHandler):
         PROCESSING = True
         # Allow time for additional events to be captured.
         time.sleep(PROCESS_DELAY)
+
         while QUEUE:
             with LOCK:
                 file_to_process = QUEUE.popleft()
@@ -95,11 +116,11 @@ class FileEventHandler(FileSystemEventHandler):
 
             try:
                 subprocess.run(command, shell=True, check=True)
-                logging.info(f"Processing completed for {file_to_process}.")
-                # Mark processed.
+                logging.info(f"Processing completed for: {file_to_process}.")
+                # Mark processed
                 PROCESSED_FILES.add(file_to_process)
             except subprocess.CalledProcessError as e:
-                logging.error(f"Error processing file {file_to_process}: {e}")
+                logging.error(f"Error processing file: {file_to_process}: {e}")
 
             save_queue()
 
@@ -107,6 +128,17 @@ class FileEventHandler(FileSystemEventHandler):
 
 
 if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) != 2:
+        print("Usage: python les-observateurs.py config.toml")
+        exit(1)
+
+    # Load TOML config.
+    config_file = sys.argv[1]
+    load_config(config_file)
+
+    # Load queue and start watcher.
     load_queue()
     event_handler = FileEventHandler()
     observer = Observer()
