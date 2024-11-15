@@ -49,8 +49,8 @@ def summarize_and_write(vtt_file_path, output_file_path, max_input_length=1024):
         final_summary = summarizer(
             concatenated_text,
             truncation=True,
-            max_length=1024,
-            min_length=256,
+            max_length=2048,
+            min_length=512,
             no_repeat_ngram_size=3,
             early_stopping=True,
             num_beams=5,
