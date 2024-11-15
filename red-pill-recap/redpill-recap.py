@@ -61,7 +61,7 @@ def summarize_and_write(vtt_file_path, output_file_path, max_input_length=1024):
             do_sample=True,
         )[0]["summary_text"]
 
-    except Exceptionas as e:
+    except Exception as e:
         print(f"Error during final summarization: {str(e)}")
         final_summary = "Error generating summary."
 
