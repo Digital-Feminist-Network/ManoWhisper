@@ -37,14 +37,11 @@ def split_text_into_chunks(text, max_tokens):
 # Summarize a preprocessed transcript and write the result.
 def summarize_and_write(vtt_file_path, output_file_path, max_input_length=1024):
     transcript = extract_text_from_vtt(vtt_file_path)
-
     # Split the transcript into smaller, overlapping chunks.
     chunks = split_text_into_chunks(transcript, max_input_length - 50)
-
-    # Concatenate all chunks into a single text input for final summarization.
+    # Create a final single summary.
     concatenated_text = "\n".join(chunks)
 
-    # Create a final single summary
     try:
         final_summary = summarizer(
             concatenated_text,
@@ -64,9 +61,8 @@ def summarize_and_write(vtt_file_path, output_file_path, max_input_length=1024):
     except Exception as e:
         print(f"Error during final summarization: {str(e)}")
         final_summary = "Error generating summary."
-
     # Write the summary to file.
-    with open(output_file_path, "w") as output_file:
+    with open(output_file_path, "w", encoding="utf-8") as output_file:
         output_file.write(final_summary)
 
     print(
