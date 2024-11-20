@@ -19,7 +19,14 @@ def generate_wordcloud(text, output_path, width=800, height=400, title="Word Clo
     plt.figure(figsize=(width / 100, height / 100), dpi=100)
     plt.imshow(wordcloud, interpolation="bilinear")
     plt.axis("off")
-    plt.title(title, fontsize=20)
+
+    plt.title(
+        title,
+        fontsize=36,
+        color="darkblue",
+        fontweight="bold",
+        loc="center",
+    )
 
     # Save to file.
     plt.savefig(output_path, bbox_inches="tight")

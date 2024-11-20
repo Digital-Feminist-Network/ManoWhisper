@@ -4,5 +4,4 @@ data/
 queue-*.txt
 les-observateurs/{logs,queues,configs}
 téléchargeur/configs
-*.png
 *.toml
