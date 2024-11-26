@@ -6,6 +6,7 @@ A collection of utilities to transcribe, summarize, and classify a variety of In
 
 * **téléchargeur**: download a given podcast's episodes and descriptions.
 * **les-observateurs**: watch a given podcast's media directory to detect new episodes and transcribe them with Whisper.
+* **red-pill-bottles**: generate a variety of classifications based on transcripts or generated summaries.
 * **red-pill-visions**: generate visualizations of a given podcast or all podcasts.
 * **red-pill-recap**: generate summarizations of a given podcast from a directory of transcript files.
 
