@@ -4,9 +4,10 @@ import sys
 from collections import defaultdict
 from datetime import datetime
 
-import matplotlib.pyplot as plt
 import numpy as np
+import plotly.graph_objects as go
 import webvtt
+from plotly.subplots import make_subplots
 
 
 def count_keywords_across_podcasts(podcast_paths, keywords):
@@ -53,15 +54,12 @@ def plot_keyword_trends_across_podcasts(
     width,
     height,
     title,
-    dpi=100,
 ):
-    fig_width = width / dpi
-    fig_height = height / dpi
-
-    plt.figure(figsize=(fig_width, fig_height), dpi=dpi)
+    """
+    Creates an interactive bar chart of keyword trends across podcasts using Plotly.
+    """
     podcasts = list(podcast_counts.keys())
-    x = np.arange(len(podcasts))
-    bar_width = 0.8 / len(keywords)
+    total_transcripts = sum(episode_counts.values())
 
     # Normalize keyword counts by episode counts to account for discrepancies in episode counts across podcasts.
     normalized_counts = {}
@@ -75,43 +73,76 @@ def plot_keyword_trends_across_podcasts(
             for keyword in keywords
         }
 
+    # Create traces for each keyword.
+    traces = []
     for i, keyword in enumerate(keywords):
         counts = [normalized_counts[podcast][keyword] for podcast in podcasts]
-        plt.bar(
-            x + i * bar_width,
-            counts,
-            bar_width,
-            label=f"'{keyword}'",
-            alpha=0.75,
+        traces.append(
+            go.Bar(
+                x=podcasts,
+                y=counts,
+                name=f"'{keyword}'",
+                text=[f"{count:.2f}" for count in counts],
+                textposition="auto",
+            )
         )
 
-    plt.title(title, fontsize=18, color="darkblue", fontweight="bold", loc="center")
-    plt.xlabel("Podcasts")
-    plt.ylabel("Keyword Frequency (per episode)")
-    plt.xticks(x + bar_width * (len(keywords) / 2), podcasts, rotation=45, ha="right")
-    plt.legend()
+    # Create the figure.
+    fig = make_subplots(specs=[[{"secondary_y": False}]])
 
-    # Add footer text.
+    for trace in traces:
+        fig.add_trace(trace)
+
+    # Add footer.
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    total_transcripts = sum(episode_counts.values())
     footer_text = (
-        f"Generated on: {timestamp}\nTranscripts analyzed: {total_transcripts}"
-    )
-    plt.text(
-        1.0,
-        -0.2,
-        footer_text,
-        fontsize=10,
-        color="gray",
-        transform=plt.gca().transAxes,
-        ha="right",
-        va="top",
+        f"Generated on: {timestamp}<br />Transcripts analyzed: {total_transcripts}"
     )
 
-    # Save to file.
-    plt.tight_layout()
-    plt.savefig(output_image)
-    print(f"Plot saved as {output_image}")
+    # Update layout.
+    fig.update_layout(
+        title=dict(
+            text=title,
+            x=0.5,
+            font=dict(size=24, family="Arial", color="darkblue"),
+        ),
+        xaxis=dict(
+            title="Podcasts",
+            tickangle=45,
+            tickfont=dict(size=14, family="Arial"),
+        ),
+        yaxis=dict(
+            title="Keyword Frequency (per episode)",
+            tickfont=dict(size=14, family="Arial"),
+        ),
+        barmode="group",  # Grouped bar chart
+        margin=dict(l=50, r=50, t=100, b=150),
+        height=height,
+        width=width,
+        annotations=[
+            dict(
+                x=1,
+                y=-0.2,
+                xref="paper",
+                yref="paper",
+                text=footer_text,
+                showarrow=False,
+                font=dict(size=12, color="gray"),
+                align="right",
+            )
+        ],
+    )
+
+    # Save as HTML and static image.
+    base_name, _ = os.path.splitext(output_image)
+    html_filename = base_name + ".html"
+    fig.write_html(html_filename)
+    fig.write_image(output_image)
+
+    print(f"Plot saved as {output_image} and {html_filename}")
+
+    # Show the interactive chart in the browser.
+    fig.show()
 
 
 def main():

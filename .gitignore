@@ -5,3 +5,4 @@ queue-*.txt
 les-observateurs/{logs,queues,configs}
 téléchargeur/configs
 *.toml
+red-pill-visions/output/
