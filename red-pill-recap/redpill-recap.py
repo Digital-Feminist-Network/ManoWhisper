@@ -1,7 +1,18 @@
+"""
+Generates summaries from a directory of WebVTT files..
+
+Usage:
+    redpill-recap.py "/path/to/vtt" "/path/to/summarizations"
+
+Arguments:
+    vtt_directory       Directory of WebVTT files
+    output_directory    Directory to save summarizations
+"""
+
 import os
 
 import webvtt
-from tqdm import tqdm
+from alive_progress import alive_bar
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
 
 # Load model and tokenizer with TensorFlow weights.
@@ -77,27 +88,30 @@ def process_vtt_directory(vtt_directory, output_directory):
 
     vtt_files = [f for f in os.listdir(vtt_directory) if f.endswith(".vtt")]
 
-    for filename in tqdm(vtt_files, desc="Processing VTT files", unit="file"):
-        vtt_file_path = os.path.join(vtt_directory, filename)
-        base_filename = os.path.splitext(filename)[0]
-        output_file_path = os.path.join(output_directory, f"{base_filename}.txt")
+    with alive_bar(len(vtt_files), title="Processing WebVTT files", unit="file") as bar:
+        for filename in vtt_files:
+            vtt_file_path = os.path.join(vtt_directory, filename)
+            base_filename = os.path.splitext(filename)[0]
+            output_file_path = os.path.join(output_directory, f"{base_filename}.txt")
 
-        # Skip already processed files
-        if os.path.exists(output_file_path):
-            print(f"Summary already exists for {filename}, skipping...")
-            continue
+            # Skip already processed files.
+            if os.path.exists(output_file_path):
+                print(f"Summary already exists for {filename}, skipping...")
+                bar()
+                continue
 
-        summarize_and_write(vtt_file_path, output_file_path)
+            summarize_and_write(vtt_file_path, output_file_path)
+            bar()
 
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Process VTT files and summarize their content."
+        description="Process WebVTT files and summarize their content."
     )
     parser.add_argument(
-        "vtt_directory", type=str, help="Path to the directory containing VTT files"
+        "vtt_directory", type=str, help="Path to the directory containing WebVTT files"
     )
     parser.add_argument(
         "output_directory", type=str, help="Path to the directory to save summaries"
