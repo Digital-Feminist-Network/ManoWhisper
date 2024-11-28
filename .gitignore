@@ -1,8 +1,9 @@
-data/
+*.csv
 *.json
 *.log
-queue-*.txt
-les-observateurs/{logs,queues,configs}
-téléchargeur/configs
 *.toml
+data/
+les-observateurs/{logs,queues,configs}
+queue-*.txt
 red-pill-visions/output/
+téléchargeur/configs
