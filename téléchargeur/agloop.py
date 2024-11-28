@@ -47,18 +47,38 @@ def write_transcript_vtt(transcript, title, output_path):
     vtt_filename = os.path.join(output_path, f"{title}.vtt")
     with open(vtt_filename, "w", encoding="utf-8") as vtt_file:
         vtt_file.write("WEBVTT\n\n")
+
+        # Sort the transcript by start time (in case it's unordered).
+        transcript = sorted(transcript, key=lambda x: x["start"])
+
+        # Add captions to the WebVTT file.
         for entry in transcript:
-            start = format_time(entry["start"])
-            end = format_time(entry["end"])
-            vtt_file.write(f"{start} --> {end}\n{entry['text']}\n\n")
+            start = entry["start"]
+            end = entry["end"]
+
+            # If the start and end times are equal, add 0.001 second to the end time.
+            if start == end:
+                end += 0.001
+
+            # Ensure that the start time is less than the end time.
+            if start >= end:
+                print(
+                    f"Warning: Skipping invalid timestamp for {title} ({start} --> {end})"
+                )
+                continue
+
+            # Write the caption.
+            start_vtt = format_time(start)
+            end_vtt = format_time(end)
+            vtt_file.write(f"{start_vtt} --> {end_vtt}\n{entry['text']}\n\n")
 
 
 # Format seconds to WebVTT time (hh:mm:ss.mmm).
 def format_time(seconds):
-    hours = seconds // 3600
-    minutes = (seconds % 3600) // 60
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
     seconds = seconds % 60
-    return f"{int(hours):02}:{int(minutes):02}:{seconds:06.3f}".replace(".", ",")
+    return f"{hours:02}:{minutes:02}:{seconds:06.3f}"
 
 
 def main(episodes_url, output_path):
