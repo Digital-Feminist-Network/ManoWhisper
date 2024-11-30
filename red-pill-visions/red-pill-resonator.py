@@ -1,3 +1,17 @@
+"""
+Generate keyword frequency graphs across a corpus of WebVTT files.
+
+Usage:
+    red-pill-resonator.py <keywords> <width_px> <height_px> <title> <output_image>
+
+Arguments:
+    keywords      Comma delimited list of keywords
+    width         Width (pixels) of graph
+    height        Height (pixels) of graph
+    title         Title of graph
+    output_image  Filename of graph
+"""
+
 import fnmatch
 import os
 import sys
@@ -7,6 +21,7 @@ from datetime import datetime
 import numpy as np
 import plotly.graph_objects as go
 import webvtt
+from alive_progress import alive_bar
 from plotly.subplots import make_subplots
 
 
@@ -14,38 +29,50 @@ def count_keywords_across_podcasts(podcast_paths, keywords):
     podcast_counts = defaultdict(lambda: defaultdict(int))
     episode_counts = {}
 
-    for podcast, directory in podcast_paths.items():
-        if not os.path.exists(directory):
-            print(f"Warning: Directory {directory} does not exist. Skipping...")
-            continue
+    # Calculate total tasks (podcasts and their WebVTT files).
+    total_files = sum(
+        [
+            len([f for f in os.listdir(directory) if f.endswith(".vtt")])
+            for directory in podcast_paths.values()
+        ]
+    )
 
-        files = [f for f in os.listdir(directory) if f.endswith(".vtt")]
-        # Count episodes.
-        episode_counts[podcast] = len(files)
+    # Initialize the progress bar for all files.
+    with alive_bar(total_files, title="Processing podcasts and episodes") as bar:
+        for podcast, directory in podcast_paths.items():
+            if not os.path.exists(directory):
+                print(f"Warning: Directory {directory} does not exist. Skipping...")
+                continue
 
-        for filename in files:
-            vtt_path = os.path.join(directory, filename)
+            files = [f for f in os.listdir(directory) if f.endswith(".vtt")]
+            # Count episodes.
+            episode_counts[podcast] = len(files)
 
-            # Process each caption in the transcript.
-            for caption in webvtt.read(vtt_path):
-                text = caption.text.lower()
-                words = text.split()
+            for filename in files:
+                vtt_path = os.path.join(directory, filename)
 
-                for keyword in keywords:
-                    # Match phrases or single words.
-                    if " " in keyword:
-                        # Phrase matching.
-                        if fnmatch.fnmatch(text, f"*{keyword.lower()}*"):
-                            podcast_counts[podcast][keyword] += 1
-                    else:
-                        # Single word matching.
-                        podcast_counts[podcast][keyword] += sum(
-                            fnmatch.fnmatch(word, keyword.lower()) for word in words
-                        )
+                # Process each caption in the transcript.
+                for caption in webvtt.read(vtt_path):
+                    text = caption.text.lower()
+                    words = text.split()
+
+                    for keyword in keywords:
+                        # Match phrases or single words.
+                        if " " in keyword:
+                            # Phrase matching.
+                            if fnmatch.fnmatch(text, f"*{keyword.lower()}*"):
+                                podcast_counts[podcast][keyword] += 1
+                        else:
+                            # Single word matching.
+                            podcast_counts[podcast][keyword] += sum(
+                                fnmatch.fnmatch(word, keyword.lower()) for word in words
+                            )
+                bar()
 
     return podcast_counts, episode_counts
 
 
+# Create  bar chart of keyword trends across podcasts using Plotly.
 def plot_keyword_trends_across_podcasts(
     podcast_counts,
     episode_counts,
@@ -55,9 +82,6 @@ def plot_keyword_trends_across_podcasts(
     height,
     title,
 ):
-    """
-    Creates an interactive bar chart of keyword trends across podcasts using Plotly.
-    """
     podcasts = list(podcast_counts.keys())
     total_transcripts = sum(episode_counts.values())
 
@@ -115,7 +139,7 @@ def plot_keyword_trends_across_podcasts(
             title="Keyword Frequency (per episode)",
             tickfont=dict(size=14, family="Arial"),
         ),
-        barmode="group",  # Grouped bar chart
+        barmode="group",
         margin=dict(l=50, r=50, t=100, b=150),
         height=height,
         width=width,
@@ -141,9 +165,6 @@ def plot_keyword_trends_across_podcasts(
 
     print(f"Plot saved as {output_image} and {html_filename}")
 
-    # Show the interactive chart in the browser.
-    fig.show()
-
 
 def main():
     if len(sys.argv) < 6:
@@ -152,30 +173,67 @@ def main():
         )
         sys.exit(1)
 
-    # Podcasts.
+    # Base path for podcasts.
+    base_path = "/mnt/vol1/data_sets/digfem/podcast-analysis/media"
+
+    # Podcasts and their corresponding paths.
     podcast_paths = {
-        "Candace Owens": "/home/nruest/Projects/digfemcan/podcast-analysis/mano-whisper/data/Candace Owens/vtt",
-        "Loomer Unleashed": "/home/nruest/Projects/digfemcan/podcast-analysis/mano-whisper/data/Loomer Unleashed/vtt",
-        "Tate Speech": "/home/nruest/Projects/digfemcan/podcast-analysis/mano-whisper/data/Tate Speech/vtt",
-        "The Culture War Podcast with Tim Pool": "/home/nruest/Projects/digfemcan/podcast-analysis/mano-whisper/data/The Culture War - Tim Pool/vtt",
-        "The Jordan B. Peterson Podcast": "/home/nruest/Projects/digfemcan/podcast-analysis/mano-whisper/data/The Jordan B. Peterson Podcast/vtt",
-        "The StoneZONE with Roger Stone": "/home/nruest/Projects/digfemcan/podcast-analysis/mano-whisper/data/The StoneZONE with Roger Stone/vtt",
-        "The Tucker Carlson Show": "/home/nruest/Projects/digfemcan/podcast-analysis/mano-whisper/data/The Tucker Carlson Show/vtt",
+        "America First - Nicholas J. Fuentes": os.path.join(
+            base_path, "America First - Nicholas J. Fuentes/vtt"
+        ),
+        "Candace Owens": os.path.join(base_path, "Candace Owens/vtt"),
+        "Firebrand - Matt Gaetz": os.path.join(base_path, "Firebrand - Matt Gaetz/vtt"),
+        "Fresh & Fit": os.path.join(base_path, "Fresh & Fit/vtt"),
+        "Get Off My Lawn - Gavin McInnes": os.path.join(
+            base_path, "Get Off My Lawn - Gavin McInnes/vtt"
+        ),
+        "Loomer Unleashed": os.path.join(base_path, "Loomer Unleashed/vtt"),
+        "Making Sense - Sam Harris": os.path.join(
+            base_path, "Making Sense - Sam Harris/vtt"
+        ),
+        "RFK Jr. The Defender": os.path.join(base_path, "RFK Jr. The Defender/vtt"),
+        "Stay Free - Russel Brand": os.path.join(
+            base_path, "Stay Free - Russel Brand/vtt"
+        ),
+        "Tate Speech": os.path.join(base_path, "Tate Speech/vtt"),
+        "The Ben Shapiro Show": os.path.join(base_path, "The Ben Shapiro Show/vtt"),
+        "The Charlie Kirk Show": os.path.join(base_path, "The Charlie Kirk Show/vtt"),
+        "The Culture War - Tim Pool": os.path.join(
+            base_path, "The Culture War - Tim Pool/vtt"
+        ),
+        "The Joe Rogan Experience": os.path.join(
+            base_path, "The Joe Rogan Experience/vtt"
+        ),
+        "The Jordan B. Peterson Podcast": os.path.join(
+            base_path, "The Jordan B. Peterson Podcast/vtt"
+        ),
+        "The Roseanne Barr Podcast": os.path.join(
+            base_path, "The Roseanne Barr Podcast/vtt"
+        ),
+        "The StoneZONE with Roger Stone": os.path.join(
+            base_path, "The StoneZONE with Roger Stone/vtt"
+        ),
+        "The Tucker Carlson Show": os.path.join(
+            base_path, "The Tucker Carlson Show/vtt"
+        ),
+        "Triggered - Donald Trump Jr": os.path.join(
+            base_path, "Triggered - Donald Trump Jr/vtt"
+        ),
+        "Truth Podcast - Vivek Ramaswamy": os.path.join(
+            base_path, "Truth Podcast - Vivek Ramaswamy/vtt"
+        ),
     }
 
-    # Command-line arguments.
     keywords = sys.argv[1].split(",")
     width = int(sys.argv[2])
     height = int(sys.argv[3])
     title = sys.argv[4]
     output_image = sys.argv[5]
 
-    # Count keywords across podcasts and get episode counts.
     podcast_counts, episode_counts = count_keywords_across_podcasts(
         podcast_paths, keywords
     )
 
-    # Plot keyword trends across podcasts.
     plot_keyword_trends_across_podcasts(
         podcast_counts, episode_counts, keywords, output_image, width, height, title
     )
