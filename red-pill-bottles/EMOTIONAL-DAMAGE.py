@@ -1,16 +1,24 @@
+"""
+Generate emotion scores from podcast summaries in a Google Sheet.
+
+Usage:
+    EMOTIONAL-DAMAGE.py <google_sheet_id>
+
+Arguments:
+    sheet_id   Google sheet ID.
+"""
+
 import time
 from collections import defaultdict
 
 import gspread
+from alive_progress import alive_bar
 from oauth2client.service_account import ServiceAccountCredentials
 from transformers import pipeline
 
 
 # Setup function to connect to Google Sheets.
 def setup_google_sheets(sheet_id, keyfile_path):
-    """
-    Setup function to authorize and connect to Google Sheets using the API.
-    """
     scope = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive",
@@ -21,11 +29,9 @@ def setup_google_sheets(sheet_id, keyfile_path):
     return sheet
 
 
+# Classify the emotion of the given summary using the provided model.
+# Splits text into chunks if it exceeds the maximum length.
 def classify_emotion(summary, model_pipeline, max_length=512):
-    """
-    Classify the emotion of the given summary using the provided model.
-    Splits text into chunks if it exceeds the maximum length.
-    """
     # Split summary into chunks of max_length.
     chunks = [summary[i : i + max_length] for i in range(0, len(summary), max_length)]
 
@@ -50,8 +56,8 @@ def classify_emotion(summary, model_pipeline, max_length=512):
 def process_sheets(sheet_id, keyfile_path):
     sheet = setup_google_sheets(sheet_id, keyfile_path)
 
-    # Load the "Summary" column; assume it's column 2.
-    summaries = sheet.col_values(2)
+    # Load the "Summary" column; assume it's column 3.
+    summaries = sheet.col_values(3)
 
     # Initialize the model pipeline.
     model_pipeline = pipeline(
@@ -79,7 +85,7 @@ def process_sheets(sheet_id, keyfile_path):
     for i, label in enumerate(emotion_labels):
         col_index = first_empty_col + i
         col_letter = chr(64 + col_index)
-        sheet.update(f"{col_letter}1", [[label]])
+        sheet.update(range_name=f"{col_letter}1", values=[[label]])
 
     # Map emotion labels to column indices (starting from the first empty column).
     label_indices = {
@@ -91,25 +97,26 @@ def process_sheets(sheet_id, keyfile_path):
     sheet.batch_clear([range_to_clear])
 
     # Loop through the summaries and classify each one.
-    for i, summary in enumerate(summaries[1:], start=2):
-        print(f"Processing row {i}...")
+    with alive_bar(len(summaries) - 1, title="Processing Summaries") as bar:
+        for i, summary in enumerate(summaries[1:], start=2):
 
-        # Get the emotion scores.
-        emotion_scores = classify_emotion(summary, model_pipeline)
+            # Get the emotion scores.
+            emotion_scores = classify_emotion(summary, model_pipeline)
 
-        # Prepare a row with the current data.
-        row_update = []
-        for label in emotion_labels:
-            # Check if the label exists in emotion_scores, if not, use 0 as a default.
-            emotion_score = emotion_scores.get(label, 0)
-            row_update.append(round(emotion_score, 4))
+            # Prepare a row with the current data.
+            row_update = []
+            for label in emotion_labels:
+                # Check if the label exists in emotion_scores, if not, use 0 as a default.
+                emotion_score = emotion_scores.get(label, 0)
+                row_update.append(round(emotion_score, 4))
 
-        # Update the row with the emotion scores.
-        range_to_update = f"{chr(64 + first_empty_col)}{i}:{chr(64 + first_empty_col + len(emotion_labels) - 1)}{i}"
-        sheet.update(range_to_update, [row_update])
+            # Update the row with the emotion scores.
+            range_to_update = f"{chr(64 + first_empty_col)}{i}:{chr(64 + first_empty_col + len(emotion_labels) - 1)}{i}"
+            sheet.update(range_to_update, [row_update])
 
-        # Add delay to avoid abusing the API.
-        time.sleep(2)
+            # Add delay to avoid abusing the API.
+            time.sleep(2)
+            bar()
 
 
 if __name__ == "__main__":
