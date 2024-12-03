@@ -50,15 +50,31 @@ def summarize_and_write(vtt_file_path, output_file_path, max_input_length=1024):
     transcript = extract_text_from_vtt(vtt_file_path)
     # Split the transcript into smaller, overlapping chunks.
     chunks = split_text_into_chunks(transcript, max_input_length - 50)
-    # Create a final single summary.
     concatenated_text = "\n".join(chunks)
 
     try:
+        # Tokenize the concatenated text to determine input length.
+        input_ids = tokenizer(concatenated_text, truncation=False, return_tensors="pt")[
+            "input_ids"
+        ]
+        input_length = input_ids.shape[-1]
+
+        # Ensure max_length is less than input_length for summarization.
+        if input_length < 50:
+            raise ValueError(
+                f"Input too short for meaningful summarization: {input_length} tokens."
+            )
+
+        # Dynamically adjust max_summary_length to fit the input length.
+        max_summary_length = min(
+            input_length - 1, 512
+        )  # Ensure max_length < input_length
+
         final_summary = summarizer(
             concatenated_text,
             truncation=True,
-            max_length=2048,
-            min_length=512,
+            max_length=max_summary_length,
+            min_length=min(50, max_summary_length // 2),
             no_repeat_ngram_size=3,
             early_stopping=True,
             num_beams=5,
@@ -70,8 +86,9 @@ def summarize_and_write(vtt_file_path, output_file_path, max_input_length=1024):
         )[0]["summary_text"]
 
     except Exception as e:
-        print(f"Error during final summarization: {str(e)}")
+        print(f"Error during final summarization for {vtt_file_path}: {str(e)}")
         final_summary = "Error generating summary."
+
     # Write the summary to file.
     with open(output_file_path, "w", encoding="utf-8") as output_file:
         output_file.write(final_summary)
