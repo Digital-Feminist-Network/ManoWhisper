@@ -97,7 +97,7 @@ def plot_emotion_bar_chart(data, total_episode_count, output_filename, title):
             go.Bar(
                 x=emotions,
                 y=emotion_sums,
-                name=f"{sheet_title} ({worksheet_title} - Sum)",
+                name=f"{sheet_title} (Sum)",
                 marker=dict(opacity=0.7),
             ),
             secondary_y=False,
@@ -109,7 +109,7 @@ def plot_emotion_bar_chart(data, total_episode_count, output_filename, title):
                 x=emotions,
                 y=emotion_avgs,
                 mode="lines+markers",
-                name=f"{sheet_title} ({worksheet_title} - Avg)",
+                name=f"{sheet_title} (Avg)",
                 line=dict(width=2),
                 marker=dict(symbol="circle", size=8),
             ),
