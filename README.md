@@ -1,15 +1,26 @@
 # ManoWhisper
 
-A collection of utilities to transcribe, summarize, and classify a variety of Intellectual Dark Web, White Supremacist, and ManoSphere podcasts. These utilities came out of a research need for the [Digital Feminist Network](https://digfemnet.org/).
+A collection of utilities for transcribing, summarizing, classifying, and creating visualizations from transcripts and summaries of various podcasts associated with the Intellectual Dark Web, conspiracy theories, QAnon, the Alt-Right, White Supremacist/Nationalist movements, and the Manosphere.
 
 ## About
 
 ### téléchargeur
 
-Download a given podcast's episodes and descriptions.
+Download a given podcast's episodes and descriptions, or fetch transcripts from an API.
 
-* `python agloop.py --episodes "https://fight.fudgie.org/search/api/shows/sf/episodes" --transcripts vtt`
-* `telechargeur configs/tucker.txt`
+Examples:
+
+ ```shell
+python agloop.py --episodes "https://fight.fudgie.org/search/api/shows/sf/episodes" --transcripts vtt
+```
+
+```shell
+python pill-feeder.py https://feeds.simplecast.com/vsy1m5LV
+```
+
+```bash
+telechargeur configs/tucker.txt
+```
 
 ### les-observateurs
 
@@ -17,10 +28,13 @@ Watch a given podcast's media directory to detect new episodes and transcribe th
 
 Examples:
 
-* `python careless-whisper-pill.py "/home/ruestn/podcast-analysis/media/The Roseanne Barr Podcast/mp3"`
-* `python les-observateurs.py configs/roseanne.toml`
-* `python pill-feeder.py https://feeds.simplecast.com/vsy1m5LV`
+```shell
+python careless-whisper-pill.py "/data/The Roseanne Barr Podcast/mp3"
+```
 
+```shell
+python les-observateurs.py configs/roseanne.toml
+```
 
 ### red-pill-bottles
 
@@ -28,20 +42,39 @@ Generate a variety of classifications based on transcripts or generated summarie
 
 Examples:
 
-* `python EMOTIONAL-DAMAGE.py 1mjcwuaIJtW_9bGAebM3QK8RltWD9bKrjcr3qgMpivog`
-* `python zero-shot-thirty.py --candidate-labels "gender,feminism,politics,religion" "/data/The Tucker Carlson Show/vtt" tucker-zero-shot.csv`
+```shell
+python EMOTIONAL-DAMAGE.py 1mjcwuaIJtW_9bGAebM3QK8RltWD9bKrjcr3qgMpivog
+```
+
+```shell
+python zero-shot-thirty.py --candidate-labels "gender,feminism,politics,religion" "/data/The Tucker Carlson Show/vtt" tucker-zero-shot.csv
+```
 
 ### red-pill-visions
 
-Generate visualizations of a given podcast or all podcasts.
+Generate visualizations from the transcripts or summaries of one or more podcasts.
 
 Examples:
 
-* `python emotional-roller-coaster.py "Joe Rogan Experience #1509 - Abigail Shrier.vtt" "emotion-heatmap-joe-rogan-experience-1509-abigail-shrier.html" --title "Emotions: Joe Rogan Experience #1509 - Abigail Shrier"`
-* `python red-pill-caliper.py "/data/The Culture War - Tim Pool/vtt" --podcast-name "The Culture War - Tim Pool"`
-* `python red-pill-cloud.py "/data/The Culture War - Tim Pool/vtt"the-culture-war-podcast-with-tim-pool.png --width 2560 --height 1440 --title "The Culture War Podcast with Tim Pool" --additional-stopwords="think,know"`
-* `python red-pill-emotional-damage.py 1LDz5LTeEuGhBOv3cSmlrysc9wswvIAKI_mRrrjQdydM emotions-the-ben-shapiro-show.png --title "Emotions of The Ben Shapiro Show (j-hartmann/emotion-english-distilroberta-base)"`
-* `python red-pill-resonator.py --keywords "democrat*,republic*,deep state" --width 2560 --height 1440 --title "Keyword Trend: 'democrat*,republic*,deep state'" keyword-trend-democrat-republican-deep-state.html`
+```shell
+python emotional-roller-coaster.py "Joe Rogan Experience #1509 - Abigail Shrier.vtt" "emotion-heatmap-joe-rogan-experience-1509-abigail-shrier.html" --title "Emotions: Joe Rogan Experience #1509 - Abigail Shrier"
+```
+
+```shell
+python red-pill-caliper.py "/data/The Culture War - Tim Pool/vtt" --podcast-name "The Culture War - Tim Pool"
+```
+
+```shell
+python red-pill-cloud.py "/data/The Culture War - Tim Pool/vtt"the-culture-war-podcast-with-tim-pool.png --width 2560 --height 1440 --title "The Culture War Podcast with Tim Pool" --additional-stopwords="think,know"
+```
+
+```shell
+python red-pill-emotional-damage.py 1LDz5LTeEuGhBOv3cSmlrysc9wswvIAKI_mRrrjQdydM emotions-the-ben-shapiro-show.png --title "Emotions of The Ben Shapiro Show (j-hartmann/emotion-english-distilroberta-base)"
+```
+
+```shell
+python red-pill-resonator.py --keywords "democrat*,republic*,deep state" --width 2560 --height 1440 --title "Keyword Trend: 'democrat*,republic*,deep state'" keyword-trend-democrat-republican-deep-state.html
+```
 
 ### red-pill-recap
 
@@ -49,9 +82,17 @@ Generate summarizations of a given podcast from a directory of transcript files.
 
 Examples:
 
-* `python recap-in-the-sheets.py "/data/The Joe Rogan Experience" 1mjcwuaIJtW_9bGAebM3QK8RltWD9bKrjcr3qgMpivog digfemnet.json`
-* `python redpill-recap.py "/data/The Joe Rogan Experience/vtt" "/data/The Joe Rogan Experience/summarizations"`
-* `python redpill-recap-stats.py "/data/The StoneZONE with Roger Stone/vtt/" roger-transcript-stats.csv`
+```shell
+python recap-in-the-sheets.py "/data/The Joe Rogan Experience" 1mjcwuaIJtW_9bGAebM3QK8RltWD9bKrjcr3qgMpivog digfemnet.json
+```
+
+```shell
+python redpill-recap.py "/data/The Joe Rogan Experience/vtt" "/data/The Joe Rogan Experience/summarizations"
+```
+
+```shell
+python redpill-recap-stats.py "/data/The StoneZONE with Roger Stone/vtt/" roger-transcript-stats.csv
+```
 
 ## License
 
