@@ -1,27 +1,18 @@
-"""
-Generate a heatmap of emotions for a given transcript.
-
-Usage:
-    emotional-roller-coaster.py <input_vtt_file> <output_html_file> <graph_title>
-
-Arguments:
-    input_vtt_file       A given WebVTT file
-    output_html_file     Heatmap filename
-    graph_title          Title of heatmap
-"""
-
 import os
 import re
 from datetime import datetime
 
+import click
 import numpy as np
 import plotly.graph_objects as go
 import webvtt
 from transformers import pipeline
 
 
-# Parse a WebVTT file to extract sentences and their start times.
 def parse_vtt_file(vtt_file):
+    """
+    Parse a WebVTT file to extract sentences and their start times.
+    """
     sentences = []
     timestamps = []
 
@@ -32,8 +23,8 @@ def parse_vtt_file(vtt_file):
     return sentences, timestamps
 
 
-# Classifies emotions for each sentence.
 def classify_emotions(sentences, model_pipeline):
+    """Classifies emotions for each sentence."""
     emotion_scores = []
     for sentence in sentences:
         result = model_pipeline(sentence)
@@ -46,8 +37,9 @@ def classify_emotions(sentences, model_pipeline):
     return emotion_scores
 
 
-# Generate heatmap with plotly.
-def plot_emotions_over_time(timestamps, emotion_scores, output_filename, graph_title):
+def plot_emotions_over_time(timestamps, emotion_scores, output_filename, title):
+    """Generate heatmap with plotly."""
+
     # Convert timestamps to minutes
     time_in_minutes = [
         sum(float(x) * 60**i for i, x in enumerate(reversed(ts.split(":")))) / 60
@@ -95,7 +87,7 @@ def plot_emotions_over_time(timestamps, emotion_scores, output_filename, graph_t
     # Layout and labels.
     fig.update_layout(
         title={
-            "text": graph_title,
+            "text": title,
             "x": 0.5,
             "xanchor": "center",
             "yanchor": "top",
@@ -133,28 +125,17 @@ def plot_emotions_over_time(timestamps, emotion_scores, output_filename, graph_t
 
     # Save as an HTML file.
     fig.write_html(output_filename)
-    print(f"Graph saved as {output_filename}")
-
-    # Show the interactive chart in the browser.
-    fig.show()
+    print(f"Heatmap saved as {output_filename}")
 
 
-if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) != 4:
-        print(
-            "Usage: python emotional-roller-coaster.py <input_vtt_file> <output_html_file> <graph_title>"
-        )
-        sys.exit(1)
-
-    input_vtt_file = sys.argv[1]
-    output_html_file = sys.argv[2]
-    graph_title = sys.argv[3]
-
-    if not os.path.exists(input_vtt_file):
-        print(f"Error: File {input_vtt_file} does not exist.")
-        sys.exit(1)
+@click.command()
+@click.argument("input_vtt_file", type=click.Path(exists=True, readable=True))
+@click.argument("output_html_file", type=click.Path())
+@click.option("--title", "-t", default="Emotion Heatmap", help="Title of the heatmap")
+def main(input_vtt_file, output_html_file, title):
+    """
+    Generate a heatmap of emotions for a given WebVTT transcript.
+    """
 
     sentences, timestamps = parse_vtt_file(input_vtt_file)
 
@@ -164,4 +145,8 @@ if __name__ == "__main__":
 
     emotion_scores = classify_emotions(sentences, model_pipeline)
 
-    plot_emotions_over_time(timestamps, emotion_scores, output_html_file, graph_title)
+    plot_emotions_over_time(timestamps, emotion_scores, output_html_file, title)
+
+
+if __name__ == "__main__":
+    main()

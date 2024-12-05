@@ -1,18 +1,8 @@
-"""
-Analyze podcast transcripts (WebVTT) and generate histograms.
-
-Usage:
-    red-pill-caliper.py --transcripts </path/to/vtt/files> --podcast-name <podcast-name>
-
-Arguments:
-    transcripts      Path to the directory of WebVTT files
-    podcast-name     Name of the podcast
-"""
-
 import argparse
 import os
 from datetime import datetime
 
+import click
 import plotly.express as px
 import webvtt
 from alive_progress import alive_bar
@@ -26,8 +16,8 @@ def extract_text_from_vtt(vtt_file_path):
     return " ".join(transcript)
 
 
-# Calculate various metrics for an episode.
 def calculate_metrics(text, episode_length_minutes):
+    """Calculate various metrics for an episode."""
     sentences = text.split(".")
     words = text.split()
     unique_words = set(words)
@@ -47,8 +37,9 @@ def calculate_metrics(text, episode_length_minutes):
         "speaking_rate": speaking_rate,
     }
 
-# Generate histograms.
+
 def generate_histogram(data, metric_name, x_label, title, output_file):
+    """Generate histograms."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     episode_count = len(data)
     footer_text = f"Generated: {timestamp}<br />Episode count: {episode_count}"
@@ -90,8 +81,9 @@ def generate_histogram(data, metric_name, x_label, title, output_file):
     fig.write_html(output_file)
     print(f"Saved {output_file}")
 
-# Process a directory of WebVTT files.
+
 def process_vtt_directory(vtt_directory, podcast_name):
+    """Process a directory of WebVTT files."""
     files = [f for f in os.listdir(vtt_directory) if f.endswith(".vtt")]
 
     results = []
@@ -140,19 +132,24 @@ def process_vtt_directory(vtt_directory, podcast_name):
         generate_histogram(results, metric, x_label, title, output_file)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Analyze podcast transcripts and generate histograms."
-    )
-    parser.add_argument(
-        "--transcripts",
-        type=str,
-        required=True,
-        help="Path to the directory of WebVTT files",
-    )
-    parser.add_argument(
-        "--podcast-name", type=str, required=True, help="Podcast name for graph titles"
-    )
-    args = parser.parse_args()
+@click.command()
+@click.argument(
+    "transcripts", type=click.Path(exists=True, file_okay=False, readable=True)
+)
+@click.option(
+    "--podcast-name",
+    "-p",
+    default="Podcast",
+    help="Name of the podcast for graph titles.",
+)
+def main(transcripts, podcast_name):
+    """
+    Analyze a directory of podcast transcripts (WebVTT) and generate histograms.
 
-    process_vtt_directory(args.transcripts, args.podcast_name)
+    TRANSCRIPTS: Path to the directory of WebVTT files.
+    """
+    process_vtt_directory(transcripts, podcast_name)
+
+
+if __name__ == "__main__":
+    main()

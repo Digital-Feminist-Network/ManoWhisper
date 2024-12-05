@@ -1,23 +1,10 @@
-"""
-Generate keyword frequency graphs across a corpus of WebVTT files.
-
-Usage:
-    red-pill-resonator.py <keywords> <width_px> <height_px> <title> <output_image>
-
-Arguments:
-    keywords      Comma delimited list of keywords
-    width         Width (pixels) of graph
-    height        Height (pixels) of graph
-    title         Title of graph
-    output_image  Filename of graph
-"""
-
 import fnmatch
 import os
 import sys
 from collections import defaultdict
 from datetime import datetime
 
+import click
 import numpy as np
 import plotly.graph_objects as go
 import webvtt
@@ -26,6 +13,9 @@ from plotly.subplots import make_subplots
 
 
 def count_keywords_across_podcasts(podcast_paths, keywords):
+    """
+    Count keywords across a corpus of podcast transcripts (WebVTT).
+    """
     podcast_counts = defaultdict(lambda: defaultdict(int))
     episode_counts = {}
 
@@ -72,7 +62,6 @@ def count_keywords_across_podcasts(podcast_paths, keywords):
     return podcast_counts, episode_counts
 
 
-# Create  bar chart of keyword trends across podcasts using Plotly.
 def plot_keyword_trends_across_podcasts(
     podcast_counts,
     episode_counts,
@@ -82,6 +71,9 @@ def plot_keyword_trends_across_podcasts(
     height,
     title,
 ):
+    """
+    Create  bar chart of keyword trends across podcasts using Plotly.
+    """
     podcasts = list(podcast_counts.keys())
     total_transcripts = sum(episode_counts.values())
 
@@ -157,21 +149,51 @@ def plot_keyword_trends_across_podcasts(
         ],
     )
 
-    # Save as HTML and static image.
+    # Save as HTML.
     base_name, _ = os.path.splitext(output_image)
     html_filename = base_name + ".html"
     fig.write_html(html_filename)
-    fig.write_image(output_image)
 
-    print(f"Plot saved as {output_image} and {html_filename}")
+    print(f"Plot saved as {html_filename}")
 
 
-def main():
-    if len(sys.argv) < 6:
-        print(
-            "Usage: python red-pill-resonator.py <keywords> <width_px> <height_px> <title> <output_image>"
-        )
-        sys.exit(1)
+@click.command()
+@click.argument("output_image", type=str)
+@click.option(
+    "--keywords",
+    type=str,
+    required=True,
+    help="Comma-delimited list of keywords.",
+)
+@click.option(
+    "--width",
+    type=int,
+    default=800,
+    show_default=True,
+    help="Width of the graph in pixels.",
+)
+@click.option(
+    "--height",
+    type=int,
+    default=600,
+    show_default=True,
+    help="Height of the graph in pixels.",
+)
+@click.option(
+    "--title",
+    type=str,
+    default="Keyword Frequency Graph",
+    show_default=True,
+    help="Title of the graph.",
+)
+def main(output_image, keywords, width, height, title):
+    """
+    Generate keyword frequency graphs across a corpus of WebVTT files.
+
+    \b
+    Arguments:
+      OUTPUT_IMAGE  Filename of the graph.
+    """
 
     # Base path for podcasts.
     base_path = "/mnt/vol1/data_sets/digfem/podcast-analysis/media"
@@ -224,11 +246,7 @@ def main():
         ),
     }
 
-    keywords = sys.argv[1].split(",")
-    width = int(sys.argv[2])
-    height = int(sys.argv[3])
-    title = sys.argv[4]
-    output_image = sys.argv[5]
+    keywords = keywords.split(",")
 
     podcast_counts, episode_counts = count_keywords_across_podcasts(
         podcast_paths, keywords

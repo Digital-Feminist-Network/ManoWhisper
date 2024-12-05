@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 
+import click
 import gspread
 import numpy as np
 import plotly.graph_objects as go
@@ -10,7 +11,7 @@ from plotly.subplots import make_subplots
 
 def setup_google_sheets(sheet_id, keyfile_path):
     """
-    Setup function to authorize and connect to Google Sheets using the API.
+    Setup function to connect to Google Sheets.
     """
     scope = [
         "https://www.googleapis.com/auth/spreadsheets",
@@ -23,35 +24,23 @@ def setup_google_sheets(sheet_id, keyfile_path):
 
 
 def fetch_emotion_data(sheet):
+    """
+    Get emotion scores from a give Google Sheet with an assumed
+    structure.
+    """
     # Define the indexes for the emotion columns (from anger to surprise).
-    # These correspond to the columns 'anger', 'disgust', ..., 'surprise'.
-    emotion_indexes = [
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-    ]
-
+    emotion_indexes = [3, 4, 5, 6, 7, 8, 9]
     rows = sheet.get_all_values()
-
     emotion_data = []
 
     # Skip the header row
     header = rows[0]
-    # Check if the first column is 'Episode'
     if header[0].lower() == "episode":
         rows = rows[1:]
 
     for row in rows:
-        # Ensure the row has at least the expected number of columns (episode, description, summary, and emotions)
-        if (
-            len(row) >= len(emotion_indexes) + 3
-        ):  # 3 extra columns for 'Episode', 'Description', and 'Summary'.
+        if len(row) >= len(emotion_indexes) + 3:
             try:
-                # Extract the emotion values for each row, starting from the emotion columns.
                 emotion_data.append(
                     [float(row[i]) if row[i] else 0 for i in emotion_indexes]
                 )
@@ -63,7 +52,7 @@ def fetch_emotion_data(sheet):
     return emotion_data
 
 
-def plot_emotion_bar_chart(data, output_filename, graph_title, script_name):
+def plot_emotion_bar_chart(data, output_filename, title, script_name):
     """
     Generates an interactive bar chart representing the sum or average of emotion scores using Plotly.
     """
@@ -113,12 +102,12 @@ def plot_emotion_bar_chart(data, output_filename, graph_title, script_name):
 
     # Get the current timestamp for the footer.
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    footer_text = f"Generated: {timestamp} | Episode count: {episode_count}"
+    footer_text = f"Generated: {timestamp}<br />Episode count: {episode_count}"
 
     # Update layout.
     fig.update_layout(
         title={
-            "text": graph_title,
+            "text": title,
             "x": 0.5,
             "xanchor": "center",
             "yanchor": "top",
@@ -166,33 +155,43 @@ def plot_emotion_bar_chart(data, output_filename, graph_title, script_name):
     # Save as HTML and static image.
     base_name, _ = os.path.splitext(output_filename)
     html_filename = base_name + ".html"
-    fig.write_image(output_filename)
     fig.write_html(html_filename)
 
-    print(f"Plot saved as {output_filename} and {html_filename}")
+    print(f"Plot saved as {html_filename}")
 
-    # Show the interactive chart in the browser.
-    fig.show()
+
+@click.command()
+@click.argument("google_sheet_id", type=str)
+@click.argument("output_filename", type=str)
+@click.option(
+    "--title",
+    type=str,
+    default="Emotion Bar Chart",
+    show_default=True,
+    help="Title for the graph.",
+)
+@click.option(
+    "--keyfile-path",
+    type=click.Path(exists=True),
+    default="digfemnet-9b28b7e5668e.json",
+    show_default=True,
+    help="Path to the JSON key file for Google Sheets API authentication.",
+)
+def main(google_sheet_id, output_filename, title, keyfile_path):
+    """
+    Generate an emotion bar chart from Google Sheets data.
+
+    \b
+    Arguments:
+      GOOGLE_SHEET_ID   The ID of the Google Sheet.
+      OUTPUT_FILENAME   Path to save the output chart image.
+    """
+    sheet = setup_google_sheets(google_sheet_id, keyfile_path)
+    data = fetch_emotion_data(sheet)
+    plot_emotion_bar_chart(
+        data, output_filename, title, script_name="red-pill-emotional-damage.py"
+    )
 
 
 if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) != 4:
-        print(
-            "Usage: python red-pill-emotional-damage.py <google_sheet_id> <output_filename> <graph_title>"
-        )
-        sys.exit(1)
-
-    sheet_id = sys.argv[1]
-    output_filename = sys.argv[2]
-    graph_title = sys.argv[3]
-
-    keyfile_path = "digfemnet-9b28b7e5668e.json"
-
-    sheet = setup_google_sheets(sheet_id, keyfile_path)
-    data = fetch_emotion_data(sheet)
-
-    plot_emotion_bar_chart(
-        data, output_filename, graph_title, script_name="graph-emotions.py"
-    )
+    main()

@@ -1,21 +1,7 @@
-"""
-Generate a wordcloud from a directory of WebVTT files.
-
-Usage:
-    python red-pill-cloud.py <vtt_directory> <output_image> [width] [height] [title]
-
-Arguments:
-    vtt_directory     Path to the directory of WebVTT files
-    output_image      Filename of wordcloud
-    width             Width (pixels) of wordcloud - defaults to 800
-    height            Height (pixels of wordcloud - defaults to 400
-    title             Title of wordcloud - defaults to "Word Cloud"
-"""
-
 import os
-import sys
 from datetime import datetime
 
+import click
 import matplotlib.pyplot as plt
 import nltk
 import webvtt
@@ -27,10 +13,16 @@ nltk.download("stopwords")
 
 
 def generate_wordcloud(
-    text, output_path, file_count, width=800, height=400, title="Word Cloud"
+    text,
+    output_path,
+    file_count,
+    width=800,
+    height=400,
+    title="Word Cloud",
+    stop_words=None,
 ):
     wordcloud = WordCloud(
-        width=width, height=height, background_color="white"
+        width=width, height=height, background_color="white", stopwords=stop_words
     ).generate(text)
 
     # Generate metadata.
@@ -50,7 +42,7 @@ def generate_wordcloud(
         fontweight="bold",
     )
 
-    # Add metadata pinned to the bottom-right corner.
+    # Add metadata and pin it to the bottom-right corner.
     plt.figtext(
         0.90,  # X-coordinate (right-aligned)
         0.10,  # Y-coordinate (bottom of the figure)
@@ -67,8 +59,12 @@ def generate_wordcloud(
     print(f"Wordcloud saved to {output_path}")
 
 
-def process_vtt_files(directory):
+def process_vtt_files(directory, additional_stopwords=None):
     stop_words = set(stopwords.words("english"))
+
+    # Merge additional stopwords if provided.
+    if additional_stopwords:
+        stop_words.update(word.lower() for word in additional_stopwords)
 
     # Collect text from all VTT files in directory.
     full_text = []
@@ -94,22 +90,42 @@ def process_vtt_files(directory):
     return " ".join(full_text), file_count
 
 
-def main():
-    if len(sys.argv) < 3:
-        print(
-            "Usage: python red-pill-cloud.py <vtt_directory> <output_image> [width] [height] [title]"
-        )
-        sys.exit(1)
+@click.command()
+@click.argument("vtt_directory", type=click.Path(exists=True))
+@click.argument("output_image", type=click.Path())
+@click.option("--width", default=800, help="Width of the wordcloud (default: 800)")
+@click.option("--height", default=400, help="Height of the wordcloud (default: 400)")
+@click.option("--title", default="Word Cloud", help="Title of the wordcloud")
+@click.option(
+    "--additional-stopwords",
+    default="",
+    help="Comma-separated list of additional stopwords to exclude",
+)
+def main(vtt_directory, output_image, width, height, title, additional_stopwords):
+    """Generate a wordcloud from WebVTT files."""
 
-    vtt_directory = sys.argv[1]
-    output_image = sys.argv[2]
-    width = int(sys.argv[3]) if len(sys.argv) > 3 else 800
-    height = int(sys.argv[4]) if len(sys.argv) > 4 else 400
-    title = sys.argv[5] if len(sys.argv) > 5 else "Word Cloud"
+    # Parse additional stopwords.
+    additional_stopwords = (
+        additional_stopwords.split(",") if additional_stopwords else None
+    )
 
-    text_corpus, file_count = process_vtt_files(vtt_directory)
+    # Process WebVTT files.
+    text_corpus, file_count = process_vtt_files(vtt_directory, additional_stopwords)
 
-    generate_wordcloud(text_corpus, output_image, file_count, width, height, title)
+    # Generate wordcloud.
+    stop_words = set(stopwords.words("english"))
+    if additional_stopwords:
+        stop_words.update(additional_stopwords)
+
+    generate_wordcloud(
+        text_corpus,
+        output_image,
+        file_count,
+        width,
+        height,
+        title,
+        stop_words=stop_words,
+    )
 
 
 if __name__ == "__main__":
