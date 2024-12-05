@@ -1,50 +1,33 @@
-"""
-Process a directory of WebVTT files and do zero shot classification content with facebook/bart-large-mnli.
-
-Usage:
-    zero-shot-thirty.py --candidate-labels "label 1,label 2,label 3" /path/to/vtt/files output.csv
-
-Arguments:
-    candidate-labels   Comma-separated list of candidate labels for classification, e.g., "label 1,label 2,label 3".
-    vtt_directory      Path to the directory containing WebVTT files.
-    output_file        Path to the output CSV file where results will be saved.
-"""
-
-import argparse
 import os
 
+import click
 import pandas as pd
 import webvtt
 from alive_progress import alive_bar
 from transformers import pipeline
 
+# Initialize the zero-shot classification pipeline.
 zero_shot_classifier = pipeline(
     "zero-shot-classification", model="facebook/bart-large-mnli"
 )
 
 
-# Extract and preprocess text from transcripts.
 def extract_text_from_vtt(vtt_path):
+    """Extract and preprocess text from transcripts."""
     transcript = []
     for caption in webvtt.read(vtt_path):
         transcript.append(caption.text)
-
-    full_text = " ".join(transcript)
-    return full_text
+    return " ".join(transcript)
 
 
-# Classify podcast transcript text.
 def classify_text(text, candidate_labels):
+    """Classify podcast transcript text."""
     zero_shot_result = zero_shot_classifier(text, candidate_labels)
-
-    # Extract the highest score label from each model's output.
-    zero_shot_class = zero_shot_result["labels"][0]
-
-    return zero_shot_class
+    return zero_shot_result["labels"][0]  # Highest score label
 
 
-# Process a directory of transcripts.
 def process_vtt_directory(vtt_directory, candidate_labels):
+    """Process a directory of transcripts."""
     results = []
     files = [f for f in os.listdir(vtt_directory) if f.endswith(".vtt")]
 
@@ -60,41 +43,42 @@ def process_vtt_directory(vtt_directory, candidate_labels):
             bar()
 
     # Return the results as a pandas DataFrame.
-    return pd.DataFrame(results, columns=["filename", "zero shot classification"])
+    return pd.DataFrame(results, columns=["filename", "zero_shot_classification"])
 
 
-# Create the output spreadsheet.
 def generate_spreadsheet(vtt_directory, output_file, candidate_labels):
-    # Process the WebVTT directory and classify the transcripts.
+    """Create the output spreadsheet."""
     result_df = process_vtt_directory(vtt_directory, candidate_labels)
-
-    # Save the results to a CSV file.
     result_df.to_csv(output_file, index=False)
     print(f"Classification results saved to {output_file}")
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Process WebVTT files and classify their content."
-    )
-    parser.add_argument(
-        "vtt_directory", type=str, help="Path to the directory containing VTT files."
-    )
-    parser.add_argument(
-        "output_file",
-        type=str,
-        help="Path to the output CSV file where results will be saved.",
-    )
-    parser.add_argument(
-        "--candidate-labels",
-        type=str,
-        required=True,
-        help='Comma-separated list of candidate labels for classification, e.g., "label 1,label 2,label 3".',
-    )
-    return parser.parse_args()
+@click.command()
+@click.argument("vtt_directory", type=click.Path(exists=True))
+@click.argument("output_file", type=click.Path())
+@click.option(
+    "--candidate-labels",
+    type=str,
+    required=True,
+    help="Comma-separated list of candidate labels for classification, e.g., 'label 1,label 2,label 3'.",
+)
+def main(vtt_directory, output_file, candidate_labels):
+    """
+    Process a directory of WebVTT files and do zero-shot classification content with facebook/bart-large-mnli.
+
+    \b
+    Arguments:
+      VTT_DIRECTORY   Path to the directory containing WebVTT files.
+      OUTPUT_FILE     Path to the output CSV file where results will be saved.
+
+    \b
+    Options:
+      --candidate-labels   Comma-separated list of candidate labels for classification.
+    """
+    # Split and clean candidate labels.
+    candidate_labels_list = [label.strip() for label in candidate_labels.split(",")]
+    generate_spreadsheet(vtt_directory, output_file, candidate_labels_list)
 
 
 if __name__ == "__main__":
-    args = parse_args()
-    candidate_labels = [label.strip() for label in args.candidate_labels.split(",")]
-    generate_spreadsheet(args.vtt_directory, args.output_file, candidate_labels)
+    main()

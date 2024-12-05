@@ -1,24 +1,15 @@
-"""
-Generate emotion scores from podcast summaries in a Google Sheet.
-
-Usage:
-    EMOTIONAL-DAMAGE.py <google_sheet_id>
-
-Arguments:
-    sheet_id   Google sheet ID.
-"""
-
 import time
 from collections import defaultdict
 
+import click
 import gspread
 from alive_progress import alive_bar
 from oauth2client.service_account import ServiceAccountCredentials
 from transformers import pipeline
 
 
-# Setup function to connect to Google Sheets.
 def setup_google_sheets(sheet_id, keyfile_path):
+    """Setup function to connect to Google Sheets"""
     scope = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive",
@@ -29,9 +20,10 @@ def setup_google_sheets(sheet_id, keyfile_path):
     return sheet
 
 
-# Classify the emotion of the given summary using the provided model.
-# Splits text into chunks if it exceeds the maximum length.
 def classify_emotion(summary, model_pipeline, max_length=512):
+    """
+    Classify the emotion of the given summary using the provided model.
+    """
     # Split summary into chunks of max_length.
     chunks = [summary[i : i + max_length] for i in range(0, len(summary), max_length)]
 
@@ -54,6 +46,7 @@ def classify_emotion(summary, model_pipeline, max_length=512):
 
 
 def process_sheets(sheet_id, keyfile_path):
+    """Add emotion scores to Google Sheet."""
     sheet = setup_google_sheets(sheet_id, keyfile_path)
 
     # Load the "Summary" column; assume it's column 3.
@@ -119,15 +112,25 @@ def process_sheets(sheet_id, keyfile_path):
             bar()
 
 
+@click.command()
+@click.argument("google_sheet_id", type=str)
+@click.option(
+    "--keyfile-path",
+    type=click.Path(exists=True),
+    default="digfemnet-9b28b7e5668e.json",
+    show_default=True,
+    help="Path to the JSON key file for Google Sheets API authentication.",
+)
+def main(google_sheet_id, keyfile_path):
+    """
+    Generate emotion scores from podcast summaries in a Google Sheet.
+
+    \b
+    Arguments:
+      GOOGLE_SHEET_ID   The ID of the Google Sheet.
+    """
+    process_sheets(google_sheet_id, keyfile_path)
+
+
 if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) != 2:
-        print("Usage: python EMOTIONAL-DAMAGE.py <google_sheet_id>")
-        sys.exit(1)
-
-    sheet_id = sys.argv[1]
-
-    keyfile_path = "digfemnet-9b28b7e5668e.json"
-
-    process_sheets(sheet_id, keyfile_path)
+    main()

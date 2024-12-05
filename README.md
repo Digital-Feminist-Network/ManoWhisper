@@ -52,7 +52,7 @@ python zero-shot-thirty.py --candidate-labels "gender,feminism,politics,religion
 
 ### red-pill-visions
 
-Generate visualizations from the transcripts or summaries of one or more podcasts.
+Generate [visualizations](https://ruebot.net/visualizations/mano-whisper/) from the transcripts or summaries of one or more podcasts.
 
 Examples:
 
