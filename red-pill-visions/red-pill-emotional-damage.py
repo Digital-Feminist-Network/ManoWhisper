@@ -19,49 +19,61 @@ def setup_google_sheets(sheet_id, keyfile_path):
     ]
     creds = ServiceAccountCredentials.from_json_keyfile_name(keyfile_path, scope)
     client = gspread.authorize(creds)
-    sheet = client.open_by_key(sheet_id).sheet1
+    sheet = client.open_by_key(sheet_id)
     return sheet
 
 
 def fetch_emotion_data(sheet):
     """
-    Get emotion scores from a give Google Sheet with an assumed
-    structure.
+    Get emotion scores from all worksheets in a Google Sheet.
+
+    Makes assumptions on how the spreadsheet is laid out.
+
+    Header row:
+    Episode,Description,Summary,anger,disgust,fear,joy,neutral,sadness,surprise.
     """
-    # Define the indexes for the emotion columns (from anger to surprise).
     emotion_indexes = [3, 4, 5, 6, 7, 8, 9]
-    rows = sheet.get_all_values()
-    emotion_data = []
+    worksheets_data = []
+    total_episode_count = 0
 
-    # Skip the header row
-    header = rows[0]
-    if header[0].lower() == "episode":
-        rows = rows[1:]
+    for worksheet in sheet.worksheets():
+        rows = worksheet.get_all_values()
+        emotion_data = []
 
-    for row in rows:
-        if len(row) >= len(emotion_indexes) + 3:
-            try:
-                emotion_data.append(
-                    [float(row[i]) if row[i] else 0 for i in emotion_indexes]
-                )
-            except ValueError:
-                print(f"Skipping row due to conversion error: {row}")
-        else:
-            print(f"Skipping incomplete row: {row}")
+        # Skip the header row.
+        header = rows[0]
+        if header[0].lower() == "episode":
+            rows = rows[1:]
 
-    return emotion_data
+        for row in rows:
+            if len(row) >= len(emotion_indexes) + 3:
+                try:
+                    emotion_data.append(
+                        [float(row[i]) if row[i] else 0 for i in emotion_indexes]
+                    )
+                except ValueError:
+                    print(f"Skipping row due to conversion error: {row}")
+            else:
+                print(f"Skipping incomplete row: {row}")
+
+        if emotion_data:
+            worksheets_data.append((worksheet.title, emotion_data))
+            total_episode_count += len(emotion_data)
+
+    return worksheets_data, total_episode_count
 
 
-def plot_emotion_bar_chart(data, output_filename, title, script_name):
+def fetch_spreadsheet_title(sheet):
     """
-    Generates an interactive bar chart representing the sum or average of emotion scores using Plotly.
+    Retrieve the title of the spreadsheet.
     """
-    episode_count = len(data)
+    return sheet.title
 
-    # Sum or average of scores for each emotion.
-    emotion_sums = np.sum(data, axis=0)
-    emotion_avgs = np.mean(data, axis=0)
 
+def plot_emotion_bar_chart(data, total_episode_count, output_filename, title):
+    """
+    Generates an interactive bar chart overlaying emotion scores across worksheets.
+    """
     emotions = [
         "Anger 🤬",
         "Disgust 🤢",
@@ -75,34 +87,40 @@ def plot_emotion_bar_chart(data, output_filename, title, script_name):
     # Create a figure with a secondary y-axis.
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    # Add sum trace to the primary y-axis (left side).
-    fig.add_trace(
-        go.Bar(
-            x=emotions,
-            y=emotion_sums,
-            name="Sum of Scores",
-            marker=dict(color="blue", opacity=0.7),
-        ),
-        # Primary y-axis (left side).
-        secondary_y=False,
-    )
+    # Plot data for each worksheet.
+    for sheet_title, worksheet_title, emotion_data in data:
+        emotion_sums = np.sum(emotion_data, axis=0)
+        emotion_avgs = np.mean(emotion_data, axis=0)
 
-    # Add average trace to the secondary y-axis (right side).
-    fig.add_trace(
-        go.Scatter(
-            x=emotions,
-            y=emotion_avgs,
-            mode="lines+markers",
-            name="Average Score",
-            line=dict(color="red", width=4, dash="solid"),
-            marker=dict(symbol="circle", size=8),
-        ),
-        secondary_y=True,
-    )
+        # Add sum trace to the primary y-axis (left side).
+        fig.add_trace(
+            go.Bar(
+                x=emotions,
+                y=emotion_sums,
+                name=f"{sheet_title} ({worksheet_title} - Sum)",
+                marker=dict(opacity=0.7),
+            ),
+            secondary_y=False,
+        )
+
+        # Add average trace to the secondary y-axis (right side).
+        fig.add_trace(
+            go.Scatter(
+                x=emotions,
+                y=emotion_avgs,
+                mode="lines+markers",
+                name=f"{sheet_title} ({worksheet_title} - Avg)",
+                line=dict(width=2),
+                marker=dict(symbol="circle", size=8),
+            ),
+            secondary_y=True,
+        )
 
     # Get the current timestamp for the footer.
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    footer_text = f"Generated: {timestamp}<br />Episode count: {episode_count}"
+    footer_text = (
+        f"Generated: {timestamp}<br />Total episode count: {total_episode_count}"
+    )
 
     # Update layout.
     fig.update_layout(
@@ -136,8 +154,8 @@ def plot_emotion_bar_chart(data, output_filename, title, script_name):
         ),
         showlegend=True,
         margin=dict(l=50, r=50, t=100, b=100),
-        height=1400,
-        width=2560,
+        height=1237.5,
+        width=2200,
         annotations=[
             {
                 "x": 1,
@@ -152,7 +170,7 @@ def plot_emotion_bar_chart(data, output_filename, title, script_name):
         ],
     )
 
-    # Save as HTML and static image.
+    # Save as HTML.
     base_name, _ = os.path.splitext(output_filename)
     html_filename = base_name + ".html"
     fig.write_html(html_filename)
@@ -161,7 +179,7 @@ def plot_emotion_bar_chart(data, output_filename, title, script_name):
 
 
 @click.command()
-@click.argument("google_sheet_id", type=str)
+@click.argument("google_sheet_ids", type=str, nargs=-1)
 @click.argument("output_filename", type=str)
 @click.option(
     "--title",
@@ -177,20 +195,27 @@ def plot_emotion_bar_chart(data, output_filename, title, script_name):
     show_default=True,
     help="Path to the JSON key file for Google Sheets API authentication.",
 )
-def main(google_sheet_id, output_filename, title, keyfile_path):
+def main(google_sheet_ids, output_filename, title, keyfile_path):
     """
-    Generate an emotion bar chart from Google Sheets data.
+    Generate an emotion bar chart from multiple Google Sheets.
 
     \b
     Arguments:
-      GOOGLE_SHEET_ID   The ID of the Google Sheet.
-      OUTPUT_FILENAME   Path to save the output chart image.
+      GOOGLE_SHEET_IDS   Space-separated IDs of the Google Sheets.
+      OUTPUT_FILENAME    Path to save the output chart image.
     """
-    sheet = setup_google_sheets(google_sheet_id, keyfile_path)
-    data = fetch_emotion_data(sheet)
-    plot_emotion_bar_chart(
-        data, output_filename, title, script_name="red-pill-emotional-damage.py"
-    )
+    all_data = []
+    total_episode_count = 0
+
+    for sheet_id in google_sheet_ids:
+        sheet = setup_google_sheets(sheet_id, keyfile_path)
+        sheet_title = fetch_spreadsheet_title(sheet)
+        worksheet_data, episode_count = fetch_emotion_data(sheet)
+        for worksheet_title, emotion_data in worksheet_data:
+            all_data.append((sheet_title, worksheet_title, emotion_data))
+        total_episode_count += episode_count
+
+    plot_emotion_bar_chart(all_data, total_episode_count, output_filename, title)
 
 
 if __name__ == "__main__":

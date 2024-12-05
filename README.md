@@ -69,7 +69,7 @@ python red-pill-cloud.py "/data/The Culture War - Tim Pool/vtt"the-culture-war-p
 ```
 
 ```shell
-python red-pill-emotional-damage.py 1LDz5LTeEuGhBOv3cSmlrysc9wswvIAKI_mRrrjQdydM emotions-the-ben-shapiro-show.png --title "Emotions of The Ben Shapiro Show (j-hartmann/emotion-english-distilroberta-base)"
+python red-pill-emotional-damage.py 1oIa4jk5DagHvqpclM3j5kkK2dagG3FL42VRL5n3jIdM 1HJYZPfOoChrlvv9TyeZib74au-RMDciHI6TKB9gTiks emotions-matt-gaetz-donald-trump-jr.html --title "Emotions of Triggered - Donald Trump Jr & Firebrand - Matt Gaetz (j-hartmann/emotion-english-distilroberta-base)"
 ```
 
 ```shell
