@@ -80,6 +80,10 @@ python red-pill-resonator.py --keywords "democrat*,republic*,deep state" --width
 python wave-of-misogyny.py "/data/Fresh & Fit/vtt/NFL Player Speech Valid or Misogynistic?.vtt" "misogyny-wave-nfl-player-speech-valid-or-misogynistic.html" --title "Fresh & Fit: NFL Player Speech Valid or Misogynistic? (MilaNLProc/bert-base-uncased-ear-misogyny)"
 ```
 
+```shell
+python dicks-hate-the-police.py "/data/America First - Nicholas J. Fuentes/vtt/Crisis Actor Greta Thurnberg Rallies Around Climate Change HOAX | America First Ep. 465.vtt" "hatespeech-crisis-actor-greta-thurnberg-rallies-around-climate-change-hoax-america-first-ep-465.html" --title "America First: Crisis Actor Greta Thurnberg Rallies Around Climate Change HOAX | America First Ep. 465 (facebook/roberta-hate-speech-dynabench-r4-target)"
+```
+
 ### red-pill-recap
 
 Generate summarizations of a given podcast from a directory of transcript files.
