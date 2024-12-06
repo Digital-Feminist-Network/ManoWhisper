@@ -76,6 +76,10 @@ python red-pill-emotional-damage.py 1oIa4jk5DagHvqpclM3j5kkK2dagG3FL42VRL5n3jIdM
 python red-pill-resonator.py --keywords "democrat*,republic*,deep state" --width 2560 --height 1440 --title "Keyword Trend: 'democrat*,republic*,deep state'" keyword-trend-democrat-republican-deep-state.html
 ```
 
+```shell
+python wave-of-misogyny.py "/data/Fresh & Fit/vtt/NFL Player Speech Valid or Misogynistic?.vtt" "misogyny-wave-nfl-player-speech-valid-or-misogynistic.html" --title "Fresh & Fit: NFL Player Speech Valid or Misogynistic? (MilaNLProc/bert-base-uncased-ear-misogyny)"
+```
+
 ### red-pill-recap
 
 Generate summarizations of a given podcast from a directory of transcript files.
