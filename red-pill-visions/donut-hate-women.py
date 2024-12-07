@@ -28,7 +28,7 @@ def parse_vtt_files(directory):
 def classify_misogyny(sentences, model_pipeline):
     """Classifies misogyny and non-misogyny scores for each sentence."""
     misogyny_scores = []
-    non_misogyny_scores = []
+    labels = []
 
     with alive_bar(len(sentences), title="Processing Sentences") as bar:
         for sentence in sentences:
@@ -36,21 +36,22 @@ def classify_misogyny(sentences, model_pipeline):
 
             # Default scores.
             misogynist_score = 0
-            non_misogynist_score = 0
+            label = "non-misogynist"
 
             # Extract scores based on label.
             for entry in result:
                 if entry["label"] == "misogynist":
-                    # Negative for misogynistic.
                     misogynist_score = -entry["score"]
+                    label = "misogynist"
                 elif entry["label"] == "non-misogynist":
-                    non_misogynist_score = entry["score"]
+                    misogynist_score = entry["score"]
+                    label = "non-misogynist"
 
             misogyny_scores.append(misogynist_score)
-            non_misogyny_scores.append(non_misogynist_score)
+            labels.append(label)
             bar()
 
-    return misogyny_scores, non_misogyny_scores
+    return misogyny_scores, labels
 
 
 def plot_pie_chart(labels, sentences, output_filename, title):
@@ -61,7 +62,7 @@ def plot_pie_chart(labels, sentences, output_filename, title):
     non_misogynist_count = labels.count("non-misogynist")
 
     # Data for pie chart.
-    values = [misogynist_count, non_misogynist_count]
+    values = [misogyny_count, non_misogynist_count]
     labels = ["Misogyny", "Non Misogyny"]
     custom_colors = ["#ff1b6b", "#45caff"]
 
