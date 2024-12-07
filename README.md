@@ -84,6 +84,14 @@ python wave-of-misogyny.py "/data/Fresh & Fit/vtt/NFL Player Speech Valid or Mis
 python dicks-hate-the-police.py "/data/America First - Nicholas J. Fuentes/vtt/Crisis Actor Greta Thurnberg Rallies Around Climate Change HOAX | America First Ep. 465.vtt" "hatespeech-crisis-actor-greta-thurnberg-rallies-around-climate-change-hoax-america-first-ep-465.html" --title "America First: Crisis Actor Greta Thurnberg Rallies Around Climate Change HOAX | America First Ep. 465 (facebook/roberta-hate-speech-dynabench-r4-target)"
 ```
 
+```shell
+python donut-hate.py --title "America First - Nicholas J. Fuentes" "/data/America First - Nicholas J. Fuentes/vtt" hate-speech-america-first-nicholas-j-fuentes.html
+```
+
+```shell
+python donut-hate-women.py --title "Tate Speech" "/data/Tate Speech/vtt" misogyny-tate-speech.html
+```
+
 ### red-pill-recap
 
 Generate summarizations of a given podcast from a directory of transcript files.
