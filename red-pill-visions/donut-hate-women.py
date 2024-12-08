@@ -106,7 +106,7 @@ def plot_pie_chart(labels, sentences, output_filename, title):
         ],
         height=1300,
         width=1500,
-        margin=dict(l=50, r=50, t=100, b=100),
+        margin=dict(l=50, r=50, t=200, b=100),
         showlegend=False,
     )
 
