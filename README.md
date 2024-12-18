@@ -50,6 +50,10 @@ python EMOTIONAL-DAMAGE.py 1mjcwuaIJtW_9bGAebM3QK8RltWD9bKrjcr3qgMpivog
 python zero-shot-thirty.py --candidate-labels "gender,feminism,politics,religion" "/data/The Tucker Carlson Show/vtt" tucker-zero-shot.csv
 ```
 
+```shell
+python entity-matrix.py "/data/Fresh & Fit/vtt" digfemnet.json 1ZTUTmzyko7hTLsiokXoV-eliUujmazElQ1bET_1234
+```
+
 ### red-pill-visions
 
 Generate [visualizations](https://ruebot.net/visualizations/mano-whisper/) from the transcripts or summaries of one or more podcasts.
