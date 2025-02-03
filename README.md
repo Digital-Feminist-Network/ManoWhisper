@@ -1,5 +1,7 @@
 # ManoWhisper
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14794744.svg)](https://doi.org/10.5281/zenodo.14794744)
+
 A collection of utilities for transcribing, summarizing, classifying, and creating visualizations from transcripts and summaries of various podcasts associated with the Intellectual Dark Web, conspiracy theories, QAnon, the Alt-Right, White Supremacist/Nationalist movements, and the Manosphere.
 
 ## About
