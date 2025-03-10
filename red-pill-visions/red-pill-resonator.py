@@ -70,6 +70,7 @@ def plot_keyword_trends_across_podcasts(
     width,
     height,
     title,
+    mode="episode",
 ):
     """
     Create  bar chart of keyword trends across podcasts using Plotly.
@@ -77,28 +78,37 @@ def plot_keyword_trends_across_podcasts(
     podcasts = list(podcast_counts.keys())
     total_transcripts = sum(episode_counts.values())
 
-    # Normalize keyword counts by episode counts to account for discrepancies in episode counts across podcasts.
-    normalized_counts = {}
-    for podcast, counts in podcast_counts.items():
-        normalized_counts[podcast] = {
-            keyword: (
-                (counts[keyword] / episode_counts[podcast])
-                if episode_counts[podcast] > 0
+    # Calculate normalized or overall counts according to mode.
+    processed_counts = {}
+    for podcast in podcasts:
+        processed_counts[podcast] = {}
+        for keyword in keywords:
+            keyword_count = (
+                podcast_counts[podcast][keyword]
+                if keyword in podcast_counts[podcast]
                 else 0
             )
-            for keyword in keywords
-        }
+            episode_count = episode_counts.get(podcast, 0)
+            if mode == "episode":
+                processed_counts[podcast][keyword] = (
+                    keyword_count / episode_count if episode_count > 0 else 0
+                )
+            else:  # overall mode
+                processed_counts[podcast][keyword] = keyword_count
 
     # Create traces for each keyword.
     traces = []
-    for i, keyword in enumerate(keywords):
-        counts = [normalized_counts[podcast][keyword] for podcast in podcasts]
+    for keyword in keywords:
+        counts = [processed_counts[podcast][keyword] for podcast in podcasts]
+        text_labels = [
+            f"{count:.2f}" if mode == "episode" else str(count) for count in counts
+        ]
         traces.append(
             go.Bar(
                 x=podcasts,
                 y=counts,
                 name=f"'{keyword}'",
-                text=[f"{count:.2f}" for count in counts],
+                text=text_labels,
                 textposition="auto",
             )
         )
@@ -128,7 +138,7 @@ def plot_keyword_trends_across_podcasts(
             tickfont=dict(size=14, family="Arial"),
         ),
         yaxis=dict(
-            title="Keyword Frequency (per episode)",
+            title=f"Keyword {'Frequency (per Episode)' if mode=='episode' else 'Total Counts'}",
             tickfont=dict(size=14, family="Arial"),
         ),
         barmode="group",
@@ -166,6 +176,12 @@ def plot_keyword_trends_across_podcasts(
     help="Comma-delimited list of keywords.",
 )
 @click.option(
+    "--mode",
+    type=click.Choice(["overall", "episode"]),
+    required=True,
+    help="Choose whether to display overall keyword counts (--mode overall) or average counts per episode (--mode episode).",
+)
+@click.option(
     "--width",
     type=int,
     default=800,
@@ -186,7 +202,7 @@ def plot_keyword_trends_across_podcasts(
     show_default=True,
     help="Title of the graph.",
 )
-def main(output_image, keywords, width, height, title):
+def main(output_image, keywords, width, height, title, mode):
     """
     Generate keyword frequency graphs across a corpus of WebVTT files.
 
@@ -196,7 +212,7 @@ def main(output_image, keywords, width, height, title):
     """
 
     # Base path for podcasts.
-    base_path = "/mnt/vol1/data_sets/digfem/podcast-analysis/media"
+    base_path = "/home/nruest/Projects/digfemcan/podcast-analysis/mano-whisper/data"
 
     # Podcasts and their corresponding paths.
     podcast_paths = {
@@ -253,7 +269,14 @@ def main(output_image, keywords, width, height, title):
     )
 
     plot_keyword_trends_across_podcasts(
-        podcast_counts, episode_counts, keywords, output_image, width, height, title
+        podcast_counts,
+        episode_counts,
+        keywords,
+        output_image,
+        width,
+        height,
+        title,
+        mode=mode,
     )
 
 

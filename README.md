@@ -63,39 +63,69 @@ Generate [visualizations](https://ruebot.net/visualizations/mano-whisper/) from 
 Examples:
 
 ```shell
-python emotional-roller-coaster.py "Joe Rogan Experience #1509 - Abigail Shrier.vtt" "emotion-heatmap-joe-rogan-experience-1509-abigail-shrier.html" --title "Emotions: Joe Rogan Experience #1509 - Abigail Shrier"
+python emotional-roller-coaster.py \
+  "Joe Rogan Experience #1509 - Abigail Shrier.vtt" \
+  "emotion-heatmap-joe-rogan-experience-1509-abigail-shrier.html" \
+  --title "Emotions: Joe Rogan Experience #1509 - Abigail Shrier"
 ```
 
 ```shell
-python red-pill-caliper.py "/data/The Culture War - Tim Pool/vtt" --podcast-name "The Culture War - Tim Pool"
+python red-pill-caliper.py \
+  "/data/The Culture War - Tim Pool/vtt" \
+  --podcast-name "The Culture War - Tim Pool"
 ```
 
 ```shell
-python red-pill-cloud.py "/data/The Culture War - Tim Pool/vtt"the-culture-war-podcast-with-tim-pool.png --width 2560 --height 1440 --title "The Culture War Podcast with Tim Pool" --additional-stopwords="think,know"
+python red-pill-cloud.py \
+  "/data/The Culture War - Tim Pool/vtt"the-culture-war-podcast-with-tim-pool.png \
+  --width 2560 \
+  --height 1440 \
+  --title "The Culture War Podcast with Tim Pool" \
+  --additional-stopwords="think,know"
 ```
 
 ```shell
-python red-pill-emotional-damage.py 1oIa4jk5DagHvqpclM3j5kkK2dagG3FL42VRL5n3jIdM 1HJYZPfOoChrlvv9TyeZib74au-RMDciHI6TKB9gTiks emotions-matt-gaetz-donald-trump-jr.html --title "Emotions of Triggered - Donald Trump Jr & Firebrand - Matt Gaetz (j-hartmann/emotion-english-distilroberta-base)"
+python red-pill-emotional-damage.py \
+  1oIa4jk5DagHvqpclM3j5kkK2dagG3FL42VRL5n3jIdM \
+  1HJYZPfOoChrlvv9TyeZib74au-RMDciHI6TKB9gTiks \
+  emotions-matt-gaetz-donald-trump-jr.html \
+  --title "Emotions of Triggered - Donald Trump Jr & Firebrand - Matt Gaetz (j-hartmann/emotion-english-distilroberta-base)"
 ```
 
 ```shell
-python red-pill-resonator.py --keywords "democrat*,republic*,deep state" --width 2560 --height 1440 --title "Keyword Trend: 'democrat*,republic*,deep state'" keyword-trend-democrat-republican-deep-state.html
+python red-pill-resonator.py \ 
+  keyword-trend-democrat-republican-deep-state.html \
+  --keywords "democrat*,republic*,deep state" \
+  --width 2560 \
+  --height 1440 \
+  --title "Keyword Trend: 'democrat*,republic*,deep state'" \
+  --mode overall
 ```
 
 ```shell
-python wave-of-misogyny.py "/data/Fresh & Fit/vtt/NFL Player Speech Valid or Misogynistic?.vtt" "misogyny-wave-nfl-player-speech-valid-or-misogynistic.html" --title "Fresh & Fit: NFL Player Speech Valid or Misogynistic? (MilaNLProc/bert-base-uncased-ear-misogyny)"
+python wave-of-misogyny.py \
+  "/data/Fresh & Fit/vtt/NFL Player Speech Valid or Misogynistic?.vtt" \
+  "misogyny-wave-nfl-player-speech-valid-or-misogynistic.html" \
+  --title "Fresh & Fit: NFL Player Speech Valid or Misogynistic? (MilaNLProc/bert-base-uncased-ear-misogyny)"
 ```
 
 ```shell
-python dicks-hate-the-police.py "/data/America First - Nicholas J. Fuentes/vtt/Crisis Actor Greta Thurnberg Rallies Around Climate Change HOAX | America First Ep. 465.vtt" "hatespeech-crisis-actor-greta-thurnberg-rallies-around-climate-change-hoax-america-first-ep-465.html" --title "America First: Crisis Actor Greta Thurnberg Rallies Around Climate Change HOAX | America First Ep. 465 (facebook/roberta-hate-speech-dynabench-r4-target)"
+python dicks-hate-the-police.py \
+  "/data/America First - Nicholas J. Fuentes/vtt/Crisis Actor Greta Thurnberg Rallies Around Climate Change HOAX | America First Ep. 465.vtt" \
+  "hatespeech-crisis-actor-greta-thurnberg-rallies-around-climate-change-hoax-america-first-ep-465.html" \
+  --title "America First: Crisis Actor Greta Thurnberg Rallies Around Climate Change HOAX | America First Ep. 465 (facebook/roberta-hate-speech-dynabench-r4-target)"
 ```
 
 ```shell
-python donut-hate.py --title "America First - Nicholas J. Fuentes" "/data/America First - Nicholas J. Fuentes/vtt" hate-speech-america-first-nicholas-j-fuentes.html
+python donut-hate.py \
+  hate-speech-america-first-nicholas-j-fuentes.html \
+  --title "America First - Nicholas J. Fuentes" "/data/America First - Nicholas J. Fuentes/vtt"
 ```
 
 ```shell
-python donut-hate-women.py --title "Tate Speech" "/data/Tate Speech/vtt" misogyny-tate-speech.html
+python donut-hate-women.py \ 
+  misogyny-tate-speech.html \
+  --title "Tate Speech" "/data/Tate Speech/vtt"
 ```
 
 ### red-pill-recap
