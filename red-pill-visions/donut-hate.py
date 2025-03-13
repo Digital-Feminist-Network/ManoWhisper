@@ -8,19 +8,30 @@ from alive_progress import alive_bar
 from transformers import pipeline
 
 
-def parse_vtt_files(directory):
+def parse_vtt_files(input_path):
     """
-    Parse all WebVTT files in a directory to extract sentences and timestamps.
+    Parse WebVTT files to extract sentences and timestamps.
+
+    Handles both a directory of VTT files and a single VTT file.
     """
     sentences = []
     filenames = []
 
-    for filename in os.listdir(directory):
-        if filename.endswith(".vtt"):
-            filepath = os.path.join(directory, filename)
-            for caption in webvtt.read(filepath):
-                sentences.append(caption.text.strip().replace("\n", " "))
-                filenames.append(filename)
+    if os.path.isdir(input_path):
+        vtt_files = [
+            os.path.join(input_path, f)
+            for f in os.listdir(input_path)
+            if f.endswith(".vtt")
+        ]
+    elif os.path.isfile(input_path) and input_path.endswith(".vtt"):
+        vtt_files = [input_path]
+    else:
+        raise ValueError("Input must be a directory or a .vtt file.")
+
+    for filepath in vtt_files:
+        for caption in webvtt.read(filepath):
+            sentences.append(caption.text.strip().replace("\n", " "))
+            filenames.append(os.path.basename(filepath))
 
     return sentences, filenames
 
@@ -116,16 +127,18 @@ def plot_pie_chart(labels, sentences, output_filename, title):
 
 
 @click.command()
-@click.argument("input_directory", type=click.Path(exists=True, file_okay=False))
+@click.argument("input_path", type=click.Path(exists=True))
 @click.argument("output_html_file", type=click.Path())
 @click.option(
     "--title", "-t", default="Hate Speech Analysis Chart", help="Title of the chart"
 )
-def main(input_directory, output_html_file, title):
+def main(input_path, output_html_file, title):
     """
-    Generate a pie chart of hate vs not hate classifications for all WebVTT transcripts in a directory.
+    Generate a pie chart of hate vs not hate classifications for WebVTT transcripts.
+
+    Accepts either a directory of VTT files or a single VTT file.
     """
-    sentences, filenames = parse_vtt_files(input_directory)
+    sentences, filenames = parse_vtt_files(input_path)
 
     model_pipeline = pipeline(
         "text-classification", model="facebook/roberta-hate-speech-dynabench-r4-target"

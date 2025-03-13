@@ -118,14 +118,16 @@ python dicks-hate-the-police.py \
 
 ```shell
 python donut-hate.py \
+  "/data/America First - Nicholas J. Fuentes/vtt" \
   hate-speech-america-first-nicholas-j-fuentes.html \
-  --title "America First - Nicholas J. Fuentes" "/data/America First - Nicholas J. Fuentes/vtt"
+  --title "America First - Nicholas J. Fuentes"
 ```
 
 ```shell
-python donut-hate-women.py \ 
+python donut-hate-women.py \
+  "/data/Tate Speech/vtt" \
   misogyny-tate-speech.html \
-  --title "Tate Speech" "/data/Tate Speech/vtt"
+  --title "Tate Speech"
 ```
 
 ### red-pill-recap
