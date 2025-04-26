@@ -92,7 +92,7 @@ if __name__ == "__main__":
         "Get Off My Lawn - Gavin McInnes",
     ]
     output_html = "emotion-facets.html"
-    overall_title = "Mean Emotion Prevalence Classification (j-hartmann/emotion-english-distilroberta-base)"
+    overall_title = "Mean Emotion Prevalence Classification"
 
     generate_custom_emotion_facets(
         sheet_id, keyfile_path, gids, titles, output_html, overall_title
