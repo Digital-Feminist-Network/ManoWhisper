@@ -12,6 +12,7 @@ model_map = {
     "transphobia": "bitsanlp/Homophobia-Transphobia-v2-mBERT-EDA",
     "sexism": "annahaz/xlm-roberta-base-finetuned-misogyny-sexism",
     "emotion": "j-hartmann/emotion-english-distilroberta-base",
+    "homophobia": "JoshMcGiff/homophobiaBERT",
 }
 
 
@@ -25,7 +26,8 @@ def cli():
 @cli.command()
 @click.option(
     "--model",
-    type=click.Choice(["transphobia", "sexism", "hate", "misogyny"]),
+    type=click.Choice(["transphobia", "sexism", "hate", "misogyny",
+                       "homophobia"]),
     required=True,
     help="Model to use for classification.",
 )

@@ -33,6 +33,11 @@ def classify(sentences, model_pipeline, model_name):
                     label = "non-sexist"
                 elif label == "1":
                     label = "sexist"
+            elif model_name == "JoshMcGiff/homophobiaBERT":
+                if label == "LABEL_0":
+                    label = "non-homophobic"
+                elif label == "LABEL_1":
+                    label = "homophobic"
             elif model_name == "facebook/roberta-hate-speech-dynabench-r4-target":
                 pass
             elif model_name == "MilaNLProc/bert-base-uncased-ear-misogyny":
