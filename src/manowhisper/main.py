@@ -3,7 +3,8 @@ import csv
 import click
 from transformers import pipeline
 
-from manowhisper import classifier, emotions, parser, summarizer, transcriber
+from manowhisper import (classifier, emotions, parser, stats, summarizer,
+                         transcriber)
 
 model_map = {
     "misogyny": "MilaNLProc/bert-base-uncased-ear-misogyny",
@@ -164,6 +165,26 @@ def emotions_cmd(input, output):
 def summarize(input, output_dir):
     """Summarize WebVTT files."""
     summarizer.summarize_and_write(input, output_dir)
+
+
+@cli.command()
+@click.option(
+    "--input",
+    type=click.Path(exists=True, file_okay=True, dir_okay=True),
+    required=True,
+    help="Path to WebVTT transcripts.",
+)
+@click.argument("output_csv", type=click.Path())
+def statistics(input, output_csv):
+    """Calculate various metrics for a podcast."""
+    show_name = parser.extract_show_name(input)
+    results = stats.process_podcast(input, show_name)
+
+    with open(output_csv, "w", newline="") as csvfile:
+        fieldnames = results[0].keys()
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(results)
 
 
 def main():
