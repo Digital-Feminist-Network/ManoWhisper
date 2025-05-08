@@ -12,7 +12,7 @@ model_map = {
     "transphobia": "bitsanlp/Homophobia-Transphobia-v2-mBERT-EDA",
     "sexism": "annahaz/xlm-roberta-base-finetuned-misogyny-sexism",
     "emotion": "j-hartmann/emotion-english-distilroberta-base",
-    "homophobia": "JoshMcGiff/homophobiaBERT",
+    "homophobia": "bitsanlp/Homophobia-Transphobia-v2-mBERT-EDA",
 }
 
 
